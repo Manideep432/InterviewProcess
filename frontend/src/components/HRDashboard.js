@@ -318,6 +318,8 @@ const HRDashboard = ({ user, onLogout }) => {
         setError(null);
         setRetryCount(0);
         console.log('Dashboard loaded successfully');
+        console.log('Total Candidates:', data.dashboard.totalCandidates);
+        console.log('Total Panelists:', data.dashboard.totalPanelists);
       } else {
         throw new Error(data.message || 'Failed to load dashboard');
       }
@@ -1458,21 +1460,46 @@ const HRDashboard = ({ user, onLogout }) => {
           </div>
         ) : (
           <>
-            {/* Home Tab - Simple Welcome Message */}
+            {/* Home Tab - Dashboard Overview with Statistics */}
             {activeTab === 'home' && (
               <div className="home-section">
-                <h2>👋 Welcome to HR Dashboard</h2>
-                <div style={{
-                  padding: '40px',
-                  textAlign: 'center',
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: '8px',
-                  marginTop: '20px'
-                }}>
-                  <p style={{ fontSize: '18px', color: '#666', marginBottom: '20px' }}>
-                    Welcome, {user.username}!
+                <h2>📊 Dashboard Overview</h2>
+                
+                {/* Dashboard Statistics Cards */}
+                <div className="dashboard-stats-container">
+                  {/* Total Candidates Card */}
+                  <div className="dashboard-stat-card candidates-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">👥</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">TOTAL CANDIDATES</h3>
+                      <p className="stat-value">
+                        {myCandidates.length}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Total Panelists Card */}
+                  <div className="dashboard-stat-card panelists-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">🎯</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">TOTAL PANELISTS</h3>
+                      <p className="stat-value">
+                        {myPanelists.length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Welcome Message */}
+                <div className="welcome-message-box">
+                  <p className="welcome-greeting">
+                    👋 Welcome back, <strong>{user.username}</strong>!
                   </p>
-                  <p style={{ fontSize: '16px', color: '#888' }}>
+                  <p className="welcome-hint">
                     Use the tabs above to manage candidates, panelists, and interviews.
                   </p>
                 </div>
@@ -2966,6 +2993,377 @@ const HRDashboard = ({ user, onLogout }) => {
                       Feedback will appear here once panelists submit their technical assessments
                     </p>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* HR Profile Tab */}
+            {activeTab === 'profile' && (
+              <div className="profile-section">
+                <h2 style={{ textAlign: 'left', width: '100%' }}>👤 HR Profile</h2>
+
+                {profileError && (
+                  <div className="form-error-message">
+                    ❌ {profileError}
+                  </div>
+                )}
+
+                {profileSuccess && (
+                  <div className="form-success-message">
+                    ✅ {profileSuccess}
+                  </div>
+                )}
+
+                {profileLoading && !hrProfile ? (
+                  <div className="loading-message">
+                    <div className="spinner"></div>
+                    <p>Loading profile...</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveProfile} className="profile-form">
+                    {/* Personal Information Section */}
+                    <div className="form-section">
+                      <h3>📋 Personal Information</h3>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label htmlFor="fullName">Full Name <span className="required">*</span></label>
+                          <input
+                            type="text"
+                            id="fullName"
+                            name="fullName"
+                            value={profileFormData.fullName}
+                            onChange={handleProfileInputChange}
+                            placeholder="Enter your full name"
+                            required
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="phone">Phone</label>
+                          <input
+                            type="tel"
+                            id="phone"
+                            name="phone"
+                            value={profileFormData.phone}
+                            onChange={handleProfileInputChange}
+                            placeholder="Enter phone number"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="location">Location</label>
+                          <input
+                            type="text"
+                            id="location"
+                            name="location"
+                            value={profileFormData.location}
+                            onChange={handleProfileInputChange}
+                            placeholder="City, State"
+                          />
+                        </div>
+
+                        <div className="form-group full-width">
+                          <label htmlFor="address">Address</label>
+                          <input
+                            type="text"
+                            id="address"
+                            name="address"
+                            value={profileFormData.address}
+                            onChange={handleProfileInputChange}
+                            placeholder="Complete address"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Professional Details Section */}
+                    <div className="form-section">
+                      <h3>💼 Professional Details</h3>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label htmlFor="designation">Designation</label>
+                          <input
+                            type="text"
+                            id="designation"
+                            name="designation"
+                            value={profileFormData.designation}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., Senior HR Manager"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="department">Department</label>
+                          <input
+                            type="text"
+                            id="department"
+                            name="department"
+                            value={profileFormData.department}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., Human Resources"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="employeeId">Employee ID</label>
+                          <input
+                            type="text"
+                            id="employeeId"
+                            name="employeeId"
+                            value={profileFormData.employeeId}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., HR001"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="experienceYears">Experience (Years)</label>
+                          <input
+                            type="number"
+                            id="experienceYears"
+                            name="experienceYears"
+                            value={profileFormData.experienceYears}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., 5"
+                            min="0"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="company">Company</label>
+                          <input
+                            type="text"
+                            id="company"
+                            name="company"
+                            value={profileFormData.company}
+                            onChange={handleProfileInputChange}
+                            placeholder="Company name"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="workType">Work Type</label>
+                          <select
+                            id="workType"
+                            name="workType"
+                            value={profileFormData.workType}
+                            onChange={handleProfileInputChange}
+                          >
+                            <option value="On-site">On-site</option>
+                            <option value="Remote">Remote</option>
+                            <option value="Hybrid">Hybrid</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group full-width">
+                          <label htmlFor="bio">Bio</label>
+                          <textarea
+                            id="bio"
+                            name="bio"
+                            value={profileFormData.bio}
+                            onChange={handleProfileInputChange}
+                            placeholder="Brief description about yourself"
+                            rows="3"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* HR Specific Information */}
+                    <div className="form-section">
+                      <h3>🎯 HR Specific Information</h3>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label htmlFor="hrSpecialization">HR Specialization</label>
+                          <input
+                            type="text"
+                            id="hrSpecialization"
+                            name="hrSpecialization"
+                            value={profileFormData.hrSpecialization}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., Recruitment, Training"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="region">Region</label>
+                          <input
+                            type="text"
+                            id="region"
+                            name="region"
+                            value={profileFormData.region}
+                            onChange={handleProfileInputChange}
+                            placeholder="Geographic region managed"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="teamName">Team Name</label>
+                          <input
+                            type="text"
+                            id="teamName"
+                            name="teamName"
+                            value={profileFormData.teamName}
+                            onChange={handleProfileInputChange}
+                            placeholder="Your team name"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="reportingManager">Reporting Manager</label>
+                          <input
+                            type="text"
+                            id="reportingManager"
+                            name="reportingManager"
+                            value={profileFormData.reportingManager}
+                            onChange={handleProfileInputChange}
+                            placeholder="Manager's name"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="form-section">
+                      <h3>📞 Contact Information</h3>
+                      <div className="form-grid">
+                        <div className="form-group">
+                          <label htmlFor="linkedinUrl">LinkedIn URL</label>
+                          <input
+                            type="url"
+                            id="linkedinUrl"
+                            name="linkedinUrl"
+                            value={profileFormData.linkedinUrl}
+                            onChange={handleProfileInputChange}
+                            placeholder="https://linkedin.com/in/yourprofile"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="slackHandle">Slack Handle</label>
+                          <input
+                            type="text"
+                            id="slackHandle"
+                            name="slackHandle"
+                            value={profileFormData.slackHandle}
+                            onChange={handleProfileInputChange}
+                            placeholder="@yourhandle"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="emergencyContact">Emergency Contact Name</label>
+                          <input
+                            type="text"
+                            id="emergencyContact"
+                            name="emergencyContact"
+                            value={profileFormData.emergencyContact}
+                            onChange={handleProfileInputChange}
+                            placeholder="Emergency contact person"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label htmlFor="emergencyPhone">Emergency Phone</label>
+                          <input
+                            type="tel"
+                            id="emergencyPhone"
+                            name="emergencyPhone"
+                            value={profileFormData.emergencyPhone}
+                            onChange={handleProfileInputChange}
+                            placeholder="Emergency contact number"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Skills and Education */}
+                    <div className="form-section">
+                      <h3>🎓 Skills & Education</h3>
+                      <div className="form-grid">
+                        <div className="form-group full-width">
+                          <label htmlFor="skills">Skills</label>
+                          <input
+                            type="text"
+                            id="skills"
+                            name="skills"
+                            value={profileFormData.skills}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., Recruitment, Employee Relations, HRIS"
+                          />
+                        </div>
+
+                        <div className="form-group full-width">
+                          <label htmlFor="certifications">Certifications</label>
+                          <input
+                            type="text"
+                            id="certifications"
+                            name="certifications"
+                            value={profileFormData.certifications}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., SHRM-CP, PHR"
+                          />
+                        </div>
+
+                        <div className="form-group full-width">
+                          <label htmlFor="education">Education</label>
+                          <input
+                            type="text"
+                            id="education"
+                            name="education"
+                            value={profileFormData.education}
+                            onChange={handleProfileInputChange}
+                            placeholder="e.g., MBA in HR Management"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Profile Statistics (Read-only) */}
+                    {hrProfile && (
+                      <div className="form-section">
+                        <h3>📊 Profile Statistics</h3>
+                        <div className="stats-grid">
+                          <div className="stat-item">
+                            <span className="stat-label">Total Candidates Managed:</span>
+                            <span className="stat-value">{hrProfile.totalCandidatesManaged || 0}</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-label">Total Panelists Managed:</span>
+                            <span className="stat-value">{hrProfile.totalPanelistsManaged || 0}</span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-label">Account Status:</span>
+                            <span className={`stat-value ${hrProfile.active ? 'active-status' : 'inactive-status'}`}>
+                              {hrProfile.active ? '✅ Active' : '❌ Inactive'}
+                            </span>
+                          </div>
+                          <div className="stat-item">
+                            <span className="stat-label">Email:</span>
+                            <span className="stat-value">{hrProfile.email || user.email}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Form Actions */}
+                    <div className="form-actions">
+                      <button
+                        type="submit"
+                        className="submit-button"
+                        disabled={profileLoading}
+                      >
+                        {profileLoading ? '💾 Saving...' : '💾 Save Profile'}
+                      </button>
+                      <button
+                        type="button"
+                        className="cancel-button"
+                        onClick={() => setActiveTab('home')}
+                      >
+                        ❌ Cancel
+                      </button>
+                    </div>
+                  </form>
                 )}
               </div>
             )}
