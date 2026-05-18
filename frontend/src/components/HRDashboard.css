@@ -1,6 +1,5 @@
 /* HR Dashboard Styles - Enhanced */
 
-
 .hr-dashboard-container {
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -223,6 +222,24 @@
   opacity: 0.95;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.stat-sublabel {
+  font-size: 0.85rem;
+  font-weight: 400;
+  opacity: 0.85;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Highlighted stat cards for HR-specific metrics */
+.stat-card-highlight {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 8px 25px rgba(245, 87, 108, 0.3);
+}
+
+.stat-card-highlight:hover {
+  box-shadow: 0 12px 35px rgba(245, 87, 108, 0.4);
 }
 
 /* Status Breakdown Section */
@@ -1175,4 +1192,369 @@
   color: #999;
   font-style: italic;
   font-size: 0.85em;
+}
+
+/* Interviews Tab Styles */
+.interviews-section {
+  padding: 20px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.interviews-section h2 {
+  color: #667eea;
+  margin-bottom: 10px;
+}
+
+.interviews-section .section-description {
+  color: #666;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.filter-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.filter-section label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.status-filter-dropdown {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 180px;
+}
+
+.status-filter-dropdown:hover {
+  border-color: #667eea;
+}
+
+.status-filter-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.filter-count {
+  color: #666;
+  font-size: 13px;
+  margin-left: auto;
+  padding: 6px 12px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.interviews-table {
+  width: 100%;
+  font-size: 14px;
+}
+
+.interviews-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.interviews-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.interviews-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Responsive styles for Interviews tab */
+@media (max-width: 768px) {
+  .filter-section {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .status-filter-dropdown {
+    width: 100%;
+  }
+
+  .filter-count {
+    margin-left: 0;
+    text-align: center;
+  }
+
+  .interviews-table {
+    font-size: 12px;
+  }
+
+  .interviews-table th,
+  .interviews-table td {
+    padding: 8px;
+  }
+
+  .interview-status-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+  }
+}
+
+/* Feedback Section Styles */
+.feedback-section {
+  padding: 20px;
+}
+
+.feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.feedback-table th,
+.feedback-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.feedback-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+.feedback-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.rating-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: 600;
+}
+
+.recommendation-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.recommendation-selected {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.recommendation-rejected {
+  background-color: #f44336;
+  color: white;
+}
+
+.recommendation-hold,
+.recommendation-on-hold {
+  background-color: #FF9800;
+  color: white;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.9em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-submitted {
+  background-color: #2196F3;
+  color: white;
+}
+
+.status-reviewed {
+  background-color: #9C27B0;
+  color: white;
+}
+
+.status-approved {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.status-rejected {
+  background-color: #f44336;
+  color: white;
+}
+
+.download-button {
+  padding: 8px 16px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.download-button:hover {
+  background-color: #1976D2;
+}
+
+.download-button:active {
+  transform: scale(0.98);
+}
+
+/* Details Grid for Candidate and Panelist Cards */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.detail-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  border-left: 4px solid #667eea;
+}
+
+.detail-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.candidate-detail-card {
+  border-left-color: #667eea;
+}
+
+.panelist-detail-card {
+  border-left-color: #764ba2;
+}
+
+.detail-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.detail-card-header h4 {
+  margin: 0;
+  color: #333;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.detail-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #555;
+  min-width: 140px;
+  font-size: 0.9rem;
+}
+
+.detail-value {
+  color: #333;
+  text-align: right;
+  flex: 1;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+
+.status-active {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.status-inactive {
+  background: linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%);
+  color: white;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.no-data-message {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.no-data-message p {
+  color: #999;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+/* Responsive Design for Detail Cards */
+@media (max-width: 768px) {
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+  
+  .detail-label {
+    min-width: auto;
+  }
+  
+  .detail-value {
+    text-align: left;
+  }
 }

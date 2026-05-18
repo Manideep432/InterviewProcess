@@ -30,24 +30,63 @@ public class PanelistController {
     @PostMapping("/create")
     public ResponseEntity<?> createPanelist(@RequestBody Map<String, Object> request) {
         try {
+            System.out.println("=== Creating Panelist ===");
+            System.out.println("Request: " + request);
+            
+            // Validate required fields
+            if (request.get("userId") == null) {
+                throw new RuntimeException("userId is required");
+            }
+            if (request.get("hrId") == null) {
+                throw new RuntimeException("hrId is required");
+            }
+            if (request.get("specialization") == null || request.get("specialization").toString().trim().isEmpty()) {
+                throw new RuntimeException("specialization is required and cannot be empty");
+            }
+            
             Long userId = Long.valueOf(request.get("userId").toString());
             Long hrId = Long.valueOf(request.get("hrId").toString());
-            String specialization = (String) request.get("specialization");
-            Integer experienceYears = request.get("experienceYears") != null ? 
+            String specialization = request.get("specialization").toString().trim();
+            Integer experienceYears = request.get("experienceYears") != null ?
                 Integer.valueOf(request.get("experienceYears").toString()) : null;
-            String expertise = (String) request.get("expertise");
+            String expertise = request.get("expertise") != null ? request.get("expertise").toString() : null;
+
+            System.out.println("userId: " + userId);
+            System.out.println("hrId: " + hrId);
+            System.out.println("specialization: " + specialization);
+            System.out.println("experienceYears: " + experienceYears);
+            System.out.println("expertise: " + expertise);
 
             Panelist created = panelistService.createPanelist(userId, hrId, specialization, experienceYears, expertise);
+
+            System.out.println("Panelist created successfully with ID: " + created.getId());
+            System.out.println("========================");
 
             return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Panelist created successfully",
                 "panelist", created
             ));
-        } catch (Exception e) {
+        } catch (NumberFormatException e) {
+            System.err.println("Error: Invalid number format - " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", "Invalid number format: " + e.getMessage()
+            ));
+        } catch (RuntimeException e) {
+            System.err.println("Error creating panelist: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "success", false,
                 "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            System.err.println("Unexpected error creating panelist: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "An unexpected error occurred: " + e.getMessage()
             ));
         }
     }

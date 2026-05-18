@@ -111,19 +111,6 @@ public class CandidateService {
     }
 
     /**
-     * Track candidate logout - updates login status
-     */
-    public void trackCandidateLogout(String email) {
-        Optional<Candidate> candidateOpt = candidateRepository.findByEmail(email);
-        if (candidateOpt.isPresent()) {
-            Candidate candidate = candidateOpt.get();
-            candidate.setIsLoggedIn(false);
-            candidateRepository.save(candidate);
-            System.out.println("Tracked logout for candidate: " + email);
-        }
-    }
-
-    /**
      * Assign panelist to candidate
      */
     public Candidate assignPanelistToCandidate(Long candidateId, Long panelistId, Long hrId) {

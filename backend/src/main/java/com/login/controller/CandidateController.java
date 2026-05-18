@@ -2,6 +2,7 @@ package com.login.controller;
 
 import com.login.dto.CandidateDTO;
 import com.login.model.Candidate;
+import com.login.repository.CandidateRepository;
 import com.login.service.CandidateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -21,11 +23,17 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/candidates")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = {"http://localhost:3000", "http://127.0.0.1:3000"},
+             allowedHeaders = "*",
+             methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS},
+             allowCredentials = "true")
 public class CandidateController {
 
     @Autowired
     private CandidateService candidateService;
+
+    @Autowired
+    private CandidateRepository candidateRepository;
 
     /**
      * Create a new candidate
@@ -278,6 +286,33 @@ public class CandidateController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "success", false,
                 "message", e.getMessage() != null ? e.getMessage() : "Unknown error occurred"
+            ));
+        }
+    }
+
+    /**
+     * Get candidate by email (for logged-in candidates to fetch their own info)
+     */
+    @GetMapping("/by-email/{email}")
+    public ResponseEntity<?> getCandidateByEmail(@PathVariable String email) {
+        try {
+            Optional<Candidate> candidate = candidateRepository.findByEmail(email);
+            if (candidate.isPresent()) {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "candidate", candidate.get()
+                ));
+            } else {
+                return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "candidate", null,
+                    "message", "No candidate profile found"
+                ));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
             ));
         }
     }

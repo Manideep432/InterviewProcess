@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
 import './CandidateInfo.css';
 
 const CandidateInfo = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('home');
+  const [interviews, setInterviews] = useState([]);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+  const [candidateName, setCandidateName] = useState('');
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+  const [candidateId, setCandidateId] = useState(null);
   const [formData, setFormData] = useState({
     candidateName: '',
     mailId: '',
@@ -165,12 +171,166 @@ const CandidateInfo = ({ user, onLogout }) => {
     onLogout();
   };
 
+  // Fetch candidate name and ID on component mount
+  useEffect(() => {
+    const fetchCandidateName = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+        const url = `${apiUrl}/api/candidates/by-email/${encodeURIComponent(user.email)}`;
+        
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.candidate && data.candidate.name) {
+            setCandidateName(data.candidate.name);
+            setCandidateId(data.candidate.id);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching candidate name:', error);
+      }
+    };
+
+    fetchCandidateName();
+  }, [user.email]);
+
+  // Fetch interviews when "My Interviews" tab is active
+  useEffect(() => {
+    if (activeTab === 'myInterviews') {
+      fetchInterviews();
+    }
+  }, [activeTab]);
+
+  // Fetch feedback when "feedback" tab is active
+  useEffect(() => {
+    if (activeTab === 'feedback' && candidateId) {
+      fetchFeedback();
+    }
+  }, [activeTab, candidateId]);
+
+  const fetchInterviews = async () => {
+    setLoadingInterviews(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+      const url = `${apiUrl}/api/interviews/candidate/email/${encodeURIComponent(user.email)}/details`;
+      
+      console.log('Fetching interviews from:', url);
+      console.log('User email:', user.email);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Interviews data:', data);
+        setInterviews(data.interviews || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch interviews:', response.status, errorData);
+        setInterviews([]);
+      }
+    } catch (error) {
+      console.error('Error fetching interviews:', error);
+      setInterviews([]);
+    } finally {
+      setLoadingInterviews(false);
+    }
+  };
+
+  const fetchFeedback = async () => {
+    setLoadingFeedback(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8081';
+      const url = `${apiUrl}/api/interview-feedback/candidate/${candidateId}`;
+      
+      console.log('Fetching feedback from:', url);
+      console.log('Candidate ID:', candidateId);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Feedback response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Feedback data:', data);
+        setFeedbackList(data.feedbackList || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to fetch feedback:', response.status, errorData);
+        setFeedbackList([]);
+      }
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      setFeedbackList([]);
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return 'N/A';
+    return timeString;
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'SCHEDULED':
+        return 'status-scheduled';
+      case 'COMPLETED':
+        return 'status-completed';
+      case 'CANCELLED':
+        return 'status-cancelled';
+      case 'IN_PROGRESS':
+        return 'status-in-progress';
+      case 'RESCHEDULED':
+        return 'status-rescheduled';
+      default:
+        return 'status-default';
+    }
+  };
+
   return (
     <div className="candidate-dashboard">
       {/* Header/Navbar */}
       <header className="candidate-header">
         <div className="header-left">
           <span className="role-badge">Role: CANDIDATE</span>
+          {candidateName && (
+            <span className="candidate-name-badge">👤 {candidateName}</span>
+          )}
         </div>
         <nav className="header-nav">
           <button 
@@ -185,7 +345,13 @@ const CandidateInfo = ({ user, onLogout }) => {
           >
             Candidate Info
           </button>
-          <button 
+          <button
+            className={`nav-link ${activeTab === 'myInterviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('myInterviews')}
+          >
+            My Interviews
+          </button>
+          <button
             className={`nav-link ${activeTab === 'feedback' ? 'active' : ''}`}
             onClick={() => setActiveTab('feedback')}
           >
@@ -442,15 +608,250 @@ const CandidateInfo = ({ user, onLogout }) => {
           </div>
         )}
 
+        {activeTab === 'myInterviews' && (
+          <div className="info-card">
+            <h2 className="card-title">My Scheduled Interviews</h2>
+            
+            {loadingInterviews ? (
+              <div className="loading-message">Loading interviews...</div>
+            ) : interviews.length === 0 ? (
+              <div className="no-interviews-message">
+                <p>No interviews scheduled yet.</p>
+              </div>
+            ) : (
+              <div className="interviews-list">
+                {interviews.map((interview) => (
+                  <div key={interview.interviewId} className="interview-card">
+                    <div className="interview-header">
+                      <h3 className="interview-position">{interview.position}</h3>
+                      <span className={`status-badge ${getStatusBadgeClass(interview.status)}`}>
+                        {interview.status}
+                      </span>
+                    </div>
+                    
+                    <div className="interview-details">
+                      <div className="detail-row">
+                        <span className="detail-label">📅 Date:</span>
+                        <span className="detail-value">{formatDate(interview.interviewDate)}</span>
+                      </div>
+                      
+                      <div className="detail-row">
+                        <span className="detail-label">🕐 Time:</span>
+                        <span className="detail-value">
+                          {formatTime(interview.interviewTimeFrom)} - {formatTime(interview.interviewTimeTo)}
+                        </span>
+                      </div>
+                      
+                      <div className="detail-section">
+                        <h4 className="section-title">👤 Scheduled By (HR)</h4>
+                        <div className="detail-row">
+                          <span className="detail-label">Name:</span>
+                          <span className="detail-value">{interview.hrName || 'N/A'}</span>
+                        </div>
+                        {interview.hrDesignation && (
+                          <div className="detail-row">
+                            <span className="detail-label">Designation:</span>
+                            <span className="detail-value">{interview.hrDesignation}</span>
+                          </div>
+                        )}
+                        <div className="detail-row">
+                          <span className="detail-label">Email:</span>
+                          <span className="detail-value">{interview.hrEmail || 'N/A'}</span>
+                        </div>
+                        {interview.hrPhone && (
+                          <div className="detail-row">
+                            <span className="detail-label">Phone:</span>
+                            <span className="detail-value">{interview.hrPhone}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {interview.panelistName && (
+                        <div className="detail-section">
+                          <h4 className="section-title">👨‍💼 Interviewer (Panelist)</h4>
+                          <div className="detail-row">
+                            <span className="detail-label">Name:</span>
+                            <span className="detail-value">{interview.panelistName}</span>
+                          </div>
+                          <div className="detail-row">
+                            <span className="detail-label">Email:</span>
+                            <span className="detail-value">{interview.panelistEmail || 'N/A'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {interview.notes && (
+                        <div className="detail-section">
+                          <h4 className="section-title">📝 Notes</h4>
+                          <p className="interview-notes">{interview.notes}</p>
+                        </div>
+                      )}
+                      
+                      {interview.meetingLink && (
+                        <div className="detail-section">
+                          <h4 className="section-title">🔗 Meeting Link</h4>
+                          <a
+                            href={interview.meetingLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="meeting-link"
+                          >
+                            Join Meeting
+                          </a>
+                        </div>
+                      )}
+                      
+                      {interview.feedback && (
+                        <div className="detail-section">
+                          <h4 className="section-title">💬 Feedback</h4>
+                          <p className="interview-feedback">{interview.feedback}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'feedback' && (
           <div className="info-card">
-            <h2 className="card-title">Feed Back</h2>
-            <textarea 
-              className="feedback-textarea"
-              placeholder="Enter your feedback here..."
-              rows="8"
-            ></textarea>
-            <button className="save-btn">Submit Feedback</button>
+            <h2 className="card-title">Interview Feedback</h2>
+            
+            {loadingFeedback ? (
+              <div className="loading-message">Loading feedback...</div>
+            ) : feedbackList.length === 0 ? (
+              <div className="no-feedback-message">
+                <p>No interview feedback available yet.</p>
+                <p className="info-text">Feedback will appear here after your interviews are completed and evaluated by the panelist.</p>
+              </div>
+            ) : (
+              <div className="feedback-list">
+                {feedbackList.map((feedback) => (
+                  <div key={feedback.id} className="feedback-card">
+                    <div className="feedback-header">
+                      <h3 className="feedback-position">{feedback.jobRoleSpecification}</h3>
+                      <span className={`recommendation-badge ${feedback.techPanelRecommendation === 'SELECTED' ? 'selected' : feedback.techPanelRecommendation === 'REJECTED' ? 'rejected' : 'hold'}`}>
+                        {feedback.techPanelRecommendation}
+                      </span>
+                    </div>
+                    
+                    <div className="feedback-details">
+                      <div className="detail-row">
+                        <span className="detail-label">📅 Evaluation Date:</span>
+                        <span className="detail-value">{formatDate(feedback.evaluationDate)}</span>
+                      </div>
+                      
+                      <div className="detail-row">
+                        <span className="detail-label">👨‍💼 Evaluator:</span>
+                        <span className="detail-value">{feedback.evaluatorNames}</span>
+                      </div>
+                      
+                      <div className="detail-row">
+                        <span className="detail-label">⭐ Overall Rating:</span>
+                        <span className="detail-value rating-value">{feedback.overallRating} / 10</span>
+                      </div>
+                      
+                      <div className="detail-row">
+                        <span className="detail-label">💼 Job Level:</span>
+                        <span className="detail-value">{feedback.jobLevel}</span>
+                      </div>
+                      
+                      <div className="detail-row">
+                        <span className="detail-label">📊 Experience:</span>
+                        <span className="detail-value">{feedback.yearsOfExperience} years (Tech: {feedback.yearsOfExperienceInTech} years)</span>
+                      </div>
+                      
+                      {feedback.certifications && (
+                        <div className="detail-section">
+                          <h4 className="section-title">🎓 Certifications</h4>
+                          <p className="feedback-text">{feedback.certifications}</p>
+                        </div>
+                      )}
+                      
+                      {feedback.overallFeedback && (
+                        <div className="detail-section">
+                          <h4 className="section-title">💬 Overall Feedback</h4>
+                          <p className="feedback-text">{feedback.overallFeedback}</p>
+                        </div>
+                      )}
+                      
+                      {feedback.suitabilityForRequirement && (
+                        <div className="detail-section">
+                          <h4 className="section-title">✅ Suitability for Requirement</h4>
+                          <p className="feedback-text">{feedback.suitabilityForRequirement}</p>
+                        </div>
+                      )}
+                      
+                      {feedback.improvementFocusArea && (
+                        <div className="detail-section">
+                          <h4 className="section-title">📈 Areas for Improvement</h4>
+                          <p className="feedback-text">{feedback.improvementFocusArea}</p>
+                        </div>
+                      )}
+                      
+                      {/* Technical Skills Ratings */}
+                      <div className="detail-section">
+                        <h4 className="section-title">🔧 Technical Skills Assessment</h4>
+                        <div className="skills-grid">
+                          {feedback.communicationRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">Communication:</span>
+                              <span className="skill-rating">{feedback.communicationRating}/10</span>
+                            </div>
+                          )}
+                          {feedback.programmingLanguageRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">Programming:</span>
+                              <span className="skill-rating">{feedback.programmingLanguageRating}/10</span>
+                            </div>
+                          )}
+                          {feedback.awsNativeServicesRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">AWS Native Services:</span>
+                              <span className="skill-rating">{feedback.awsNativeServicesRating}/10</span>
+                            </div>
+                          )}
+                          {feedback.microservicesDesignPatternsRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">Microservices:</span>
+                              <span className="skill-rating">{feedback.microservicesDesignPatternsRating}/10</span>
+                            </div>
+                          )}
+                          {feedback.containerizationRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">Containerization:</span>
+                              <span className="skill-rating">{feedback.containerizationRating}/10</span>
+                            </div>
+                          )}
+                          {feedback.frontendStackRating && (
+                            <div className="skill-item">
+                              <span className="skill-name">Frontend Stack:</span>
+                              <span className="skill-rating">{feedback.frontendStackRating}/10</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {feedback.awsNativeServicesNotes && (
+                        <div className="detail-section">
+                          <h4 className="section-title">📝 Technical Notes</h4>
+                          <p className="feedback-text">{feedback.awsNativeServicesNotes}</p>
+                        </div>
+                      )}
+                      
+                      <div className="feedback-footer">
+                        <span className="status-info">Status: {feedback.status}</span>
+                        {feedback.sentToHR && (
+                          <span className="sent-hr-badge">✓ Sent to HR</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>

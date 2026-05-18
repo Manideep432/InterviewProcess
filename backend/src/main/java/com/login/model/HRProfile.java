@@ -60,6 +60,10 @@ public class HRProfile {
     @Column(length = 1000)
     private String bio;
 
+    // Email field
+    @Column(length = 100)
+    private String email;
+
     // Contact Information
     @Column(length = 100)
     private String linkedinUrl;
@@ -369,6 +373,14 @@ public class HRProfile {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @Override

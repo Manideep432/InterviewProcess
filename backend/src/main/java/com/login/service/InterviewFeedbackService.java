@@ -57,13 +57,16 @@ public class InterviewFeedbackService {
         Interview interview = interviewRepository.findById(feedbackDTO.getInterviewId())
                 .orElseThrow(() -> new RuntimeException("Interview not found"));
 
-        // Validate panelist
+        // Validate panelist by user ID
         Panelist panelist = panelistRepository.findByUserId(panelistUserId)
-                .orElseThrow(() -> new RuntimeException("Panelist not found"));
+                .orElseThrow(() -> new RuntimeException("Panelist not found for user ID: " + panelistUserId));
 
         // Check if panelist is assigned to this interview
+        // interview.getPanelistId() is the Panelist entity ID, not the User ID
         if (!interview.getPanelistId().equals(panelist.getId())) {
-            throw new RuntimeException("You are not authorized to submit feedback for this interview");
+            throw new RuntimeException("❌ You are not authorized to submit feedback for this interview. " +
+                    "Interview is assigned to panelist ID: " + interview.getPanelistId() +
+                    ", but you are panelist ID: " + panelist.getId());
         }
 
         // Check if feedback already exists
@@ -167,7 +170,15 @@ public class InterviewFeedbackService {
      * Get all feedback
      */
     public List<InterviewFeedback> getAllFeedback() {
-        return feedbackRepository.findAll();
+        try {
+            List<InterviewFeedback> feedbacks = feedbackRepository.findAll();
+            System.out.println("Successfully fetched " + feedbacks.size() + " feedback records");
+            return feedbacks;
+        } catch (Exception e) {
+            System.err.println("Error in getAllFeedback: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Failed to fetch feedback records: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -221,6 +232,22 @@ public class InterviewFeedbackService {
         feedback.setSentToHR(true);
         feedback.setSentToHRAt(LocalDateTime.now());
         feedbackRepository.save(feedback);
+    }
+
+    /**
+     * Generate PDF for a feedback by ID
+     */
+    public byte[] generateFeedbackPdf(Long feedbackId) {
+        InterviewFeedback feedback = feedbackRepository.findById(feedbackId)
+                .orElseThrow(() -> new RuntimeException("Feedback not found with ID: " + feedbackId));
+        
+        return pdfGenerationService.generateInterviewFeedbackPdf(feedback);
+    }
+
+    public Long getUserIdByUsername(String username) {
+        return userRepository.findByUsernameIgnoreCase(username)
+                .map(User::getId)
+                .orElseThrow(() -> new RuntimeException("Authenticated user not found: " + username));
     }
 
     /**

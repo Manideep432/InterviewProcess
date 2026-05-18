@@ -52,7 +52,7 @@ public class InterviewFeedback {
     @Column(nullable = false)
     private String jobRoleSpecification;
 
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String jobDescription;
 
     @Column(nullable = false)
@@ -88,7 +88,7 @@ public class InterviewFeedback {
     private Double setupPackagingRating;
 
     // Certifications
-    @Column(length = 1000)
+    @Column(columnDefinition = "TEXT")
     private String certifications;
 
     // Architecting and Solutioning (for TL/ML/Architect)
@@ -101,10 +101,10 @@ public class InterviewFeedback {
     private Double otherManagementSkillsRating;
 
     // Panel Notes for each skill
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String awsNativeServicesNotes;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String technicalSkillsNotes;
 
     // Overall Rating
@@ -120,13 +120,13 @@ public class InterviewFeedback {
     private String techPanelRecommendation; // Selected/Rejected
 
     // Feedback
-    @Column(length = 5000, nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String overallFeedback;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String suitabilityForRequirement;
 
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String improvementFocusArea;
 
     // Declaration

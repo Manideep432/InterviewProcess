@@ -1,5 +1,6 @@
 package com.login.controller;
 
+import com.login.dto.CandidateInterviewDTO;
 import com.login.model.Interview;
 import com.login.model.Interview.InterviewStatus;
 import com.login.service.InterviewService;
@@ -367,6 +368,89 @@ public class InterviewController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                 "success", false,
                 "message", e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Get candidate's interviews with HR details by candidate ID
+     */
+    @GetMapping("/candidate/id/{candidateId}/details")
+    public ResponseEntity<?> getCandidateInterviewsWithDetails(@PathVariable Long candidateId) {
+        try {
+            List<CandidateInterviewDTO> interviews = interviewService.getCandidateInterviewsWithDetails(candidateId);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "interviews", interviews,
+                "count", interviews.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Failed to fetch interviews: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Get candidate's interviews with HR details by candidate email
+     */
+    @GetMapping("/candidate/email/{candidateEmail}/details")
+    public ResponseEntity<?> getCandidateInterviewsByEmailWithDetails(@PathVariable String candidateEmail) {
+        try {
+            List<CandidateInterviewDTO> interviews = interviewService.getCandidateInterviewsByEmailWithDetails(candidateEmail);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "interviews", interviews,
+                "count", interviews.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Failed to fetch interviews: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Get all interviews for an HR
+     */
+    @GetMapping("/hr/{hrId}")
+    public ResponseEntity<?> getInterviewsByHrId(@PathVariable Long hrId) {
+        try {
+            List<Interview> interviews = interviewService.getInterviewsByHrId(hrId);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "interviews", interviews,
+                "count", interviews.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Failed to fetch interviews: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Get interviews by HR ID and status
+     */
+    @GetMapping("/hr/{hrId}/status/{status}")
+    public ResponseEntity<?> getInterviewsByHrIdAndStatus(
+            @PathVariable Long hrId,
+            @PathVariable String status) {
+        try {
+            InterviewStatus interviewStatus = InterviewStatus.valueOf(status.toUpperCase());
+            List<Interview> interviews = interviewService.getInterviewsByHrIdAndStatus(hrId, interviewStatus);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "interviews", interviews,
+                "count", interviews.size()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", "Failed to fetch interviews: " + e.getMessage()
             ));
         }
     }

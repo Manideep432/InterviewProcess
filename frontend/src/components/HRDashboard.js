@@ -98,6 +98,17 @@ const HRDashboard = ({ user, onLogout }) => {
 
   // Interview data state - stores interviews for each candidate
   const [candidateInterviews, setCandidateInterviews] = useState({});
+  
+  // All interviews state for Interviews tab
+  const [allInterviews, setAllInterviews] = useState([]);
+  const [filteredInterviews, setFilteredInterviews] = useState([]);
+  const [interviewStatusFilter, setInterviewStatusFilter] = useState('ALL');
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+
+  // Candidate Feedback state
+  const [allFeedbacks, setAllFeedbacks] = useState([]);
+  const [loadingFeedbacks, setLoadingFeedbacks] = useState(false);
+  const [feedbackError, setFeedbackError] = useState('');
 
   // HR Profile state
   const [hrProfile, setHrProfile] = useState(null);
@@ -135,6 +146,120 @@ const HRDashboard = ({ user, onLogout }) => {
     fetchMyPanelists();
     fetchHRProfile();
   }, []);
+  
+  useEffect(() => {
+    if (activeTab === 'interviews') {
+      fetchAllInterviews();
+    } else if (activeTab === 'candidateFeedback') {
+      fetchAllFeedbacks();
+    }
+  }, [activeTab]);
+  
+  useEffect(() => {
+    // Filter interviews based on status
+    if (interviewStatusFilter === 'ALL') {
+      setFilteredInterviews(allInterviews);
+    } else {
+      setFilteredInterviews(allInterviews.filter(interview => interview.status === interviewStatusFilter));
+    }
+  }, [allInterviews, interviewStatusFilter]);
+
+  const fetchAllFeedbacks = async () => {
+    try {
+      setLoadingFeedbacks(true);
+      setFeedbackError('');
+      
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setFeedbackError('No authentication token found');
+        return;
+      }
+
+      console.log('Fetching all candidate feedbacks...');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/interview-feedback/all`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        console.log('Feedbacks received:', data);
+        
+        if (data.success) {
+          setAllFeedbacks(data.feedbackList || []);
+        } else {
+          const errorParts = [
+            data.message || 'Failed to fetch feedbacks',
+            data.error ? `Error: ${data.error}` : '',
+            data.details ? `Details: ${data.details}` : ''
+          ].filter(Boolean);
+          setFeedbackError(errorParts.join(' | '));
+        }
+      } else {
+        const errorParts = [
+          data.message || `Failed to fetch feedbacks (Status: ${response.status})`,
+          data.error ? `Error: ${data.error}` : '',
+          data.details ? `Details: ${data.details}` : ''
+        ].filter(Boolean);
+        setFeedbackError(errorParts.join(' | '));
+      }
+    } catch (err) {
+      console.error('Error fetching feedbacks:', err);
+      setFeedbackError('Error fetching feedbacks: ' + err.message);
+    } finally {
+      setLoadingFeedbacks(false);
+    }
+  };
+
+  const handleDownloadFeedbackPdf = async (feedbackId, candidateName) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        alert('No authentication token found');
+        return;
+      }
+
+      console.log('Downloading feedback PDF for ID:', feedbackId);
+
+      const response = await fetch(
+        `${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/interview-feedback/${feedbackId}/download-pdf`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+          credentials: 'include'
+        }
+      );
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `interview-feedback-${candidateName || feedbackId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        console.log('PDF downloaded successfully');
+      } else {
+        alert('Failed to download PDF');
+      }
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      alert('Error downloading PDF: ' + err.message);
+    }
+  };
 
   const fetchDashboardData = async (isRetry = false) => {
     try {
@@ -199,14 +324,16 @@ const HRDashboard = ({ user, onLogout }) => {
     } catch (err) {
       console.error('Error fetching dashboard:', err);
       
-      // Silently retry without showing any error to user
-      console.log('Error detected, retrying silently...');
+      // Show error to user
+      setError(err.message || 'Failed to load dashboard data');
       
-      // Auto-retry logic (max 5 times)
-      if (!isRetry && retryCount < 5) {
-        console.log(`Auto-retrying... Attempt ${retryCount + 1}/5`);
+      // Auto-retry logic (max 3 times)
+      if (!isRetry && retryCount < 3) {
+        console.log(`Auto-retrying... Attempt ${retryCount + 1}/3`);
         setRetryCount(prev => prev + 1);
-        setTimeout(() => fetchDashboardData(true), 3000 * (retryCount + 1)); // Exponential backoff
+        setTimeout(() => fetchDashboardData(true), 2000); // Retry after 2 seconds
+      } else if (retryCount >= 3) {
+        setError('Failed to load dashboard after multiple attempts. Please check if backend is running on http://localhost:8081');
       }
     } finally {
       setLoading(false);
@@ -218,6 +345,7 @@ const HRDashboard = ({ user, onLogout }) => {
       const token = localStorage.getItem('token');
       
       if (!token) {
+        setError('No authentication token found');
         return;
       }
 
@@ -243,10 +371,16 @@ const HRDashboard = ({ user, onLogout }) => {
           
           // Fetch interviews for each candidate
           fetchInterviewsForCandidates(candidates);
+        } else {
+          setError(data.message || 'Failed to fetch candidates');
         }
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.message || `Failed to fetch candidates (Status: ${response.status})`);
       }
     } catch (err) {
       console.error('Error fetching my candidates:', err);
+      setError('Error fetching candidates: ' + err.message);
     }
   };
 
@@ -309,6 +443,7 @@ const HRDashboard = ({ user, onLogout }) => {
       const token = localStorage.getItem('token');
       
       if (!token) {
+        setError('No authentication token found');
         return;
       }
 
@@ -330,10 +465,60 @@ const HRDashboard = ({ user, onLogout }) => {
         
         if (data.success) {
           setMyPanelists(data.panelists || []);
+        } else {
+          setError(data.message || 'Failed to fetch panelists');
         }
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.message || `Failed to fetch panelists (Status: ${response.status})`);
       }
     } catch (err) {
       console.error('Error fetching my panelists:', err);
+      setError('Error fetching panelists: ' + err.message);
+    }
+  };
+
+  const fetchAllInterviews = async () => {
+    try {
+      setLoadingInterviews(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('No authentication token found');
+        return;
+      }
+
+      console.log('Fetching all interviews for HR...');
+
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/interviews/hr/${user.id}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('All interviews received:', data);
+        
+        if (data.success) {
+          setAllInterviews(data.interviews || []);
+        } else {
+          setError(data.message || 'Failed to fetch interviews');
+        }
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setError(data.message || `Failed to fetch interviews (Status: ${response.status})`);
+      }
+    } catch (err) {
+      console.error('Error fetching all interviews:', err);
+      setError('Error fetching interviews: ' + err.message);
+    } finally {
+      setLoadingInterviews(false);
     }
   };
 
@@ -450,6 +635,14 @@ const HRDashboard = ({ user, onLogout }) => {
         throw new Error('No authentication token found');
       }
 
+      // Validate required fields
+      if (!newPanelist.specialization || newPanelist.specialization.trim() === '') {
+        throw new Error('Specialization is required');
+      }
+
+      console.log('=== Creating Panelist ===');
+      console.log('Step 1: Creating user account...');
+
       // First, create the user account with PANELIST role
       const userResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/auth/register`, {
         method: 'POST',
@@ -467,15 +660,27 @@ const HRDashboard = ({ user, onLogout }) => {
 
       if (!userResponse.ok) {
         const errorData = await userResponse.json().catch(() => ({}));
+        console.error('User creation failed:', errorData);
         throw new Error(errorData.error || errorData.message || 'Failed to create panelist user account');
       }
 
       const userData = await userResponse.json();
       const userId = userData.id;
 
+      console.log('User created successfully with ID:', userId);
+
       if (!userId) {
         throw new Error('Panelist user account created, but user ID was not returned by the server');
       }
+
+      console.log('Step 2: Creating panelist profile...');
+      console.log('Payload:', {
+        userId: userId,
+        hrId: user.id,
+        specialization: newPanelist.specialization.trim(),
+        experienceYears: newPanelist.experienceYears ? parseInt(newPanelist.experienceYears) : null,
+        expertise: newPanelist.expertise || null
+      });
 
       // Then, create the panelist profile
       const panelistResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/panelists/create`, {
@@ -487,14 +692,15 @@ const HRDashboard = ({ user, onLogout }) => {
         body: JSON.stringify({
           userId: userId,
           hrId: user.id,
-          specialization: newPanelist.specialization,
+          specialization: newPanelist.specialization.trim(),
           experienceYears: newPanelist.experienceYears ? parseInt(newPanelist.experienceYears) : null,
-          expertise: newPanelist.expertise
+          expertise: newPanelist.expertise || null
         })
       });
 
       if (!panelistResponse.ok) {
         const errorText = await panelistResponse.text();
+        console.error('Panelist profile creation failed:', errorText);
         let errorMessage = 'Failed to create panelist profile';
         try {
           const errorData = JSON.parse(errorText);
@@ -510,9 +716,18 @@ const HRDashboard = ({ user, onLogout }) => {
       try {
         panelistData = JSON.parse(responseText);
       } catch (e) {
+        console.error('Invalid JSON response:', responseText);
         throw new Error('Invalid response from server when creating panelist profile');
       }
+
+      console.log('Panelist profile created:', panelistData);
+
+      if (!panelistData.panelist || !panelistData.panelist.id) {
+        throw new Error('Panelist profile created but ID was not returned');
+      }
+
       const panelistId = panelistData.panelist.id;
+      console.log('Step 3: Updating additional profile fields...');
 
       // Update panelist profile with additional fields
       const updateResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8081'}/api/panelists/profile/${userId}`, {
@@ -1012,9 +1227,11 @@ const HRDashboard = ({ user, onLogout }) => {
   const fetchHRProfile = async () => {
     try {
       setProfileLoading(true);
+      setProfileError('');
       const token = localStorage.getItem('token');
       
       if (!token) {
+        setProfileError('No authentication token found');
         return;
       }
 
@@ -1060,10 +1277,16 @@ const HRDashboard = ({ user, onLogout }) => {
             hrSpecialization: data.profile.hrSpecialization || '',
             region: data.profile.region || ''
           });
+        } else {
+          setProfileError(data.message || 'Failed to fetch HR profile');
         }
+      } else {
+        const data = await response.json().catch(() => ({}));
+        setProfileError(data.message || `Failed to fetch HR profile (Status: ${response.status})`);
       }
     } catch (err) {
       console.error('Error fetching HR profile:', err);
+      setProfileError('Error fetching HR profile: ' + err.message);
     } finally {
       setProfileLoading(false);
     }
@@ -1205,6 +1428,18 @@ const HRDashboard = ({ user, onLogout }) => {
         >
           👥 Manage Panelists
         </button>
+        <button
+          className={`hr-tab ${activeTab === 'interviews' ? 'active' : ''}`}
+          onClick={() => setActiveTab('interviews')}
+        >
+          📅 Interviews
+        </button>
+        <button
+          className={`hr-tab ${activeTab === 'candidateFeedback' ? 'active' : ''}`}
+          onClick={() => setActiveTab('candidateFeedback')}
+        >
+          📋 Candidate Feedback
+        </button>
       </div>
 
       {/* Content Area */}
@@ -1223,137 +1458,23 @@ const HRDashboard = ({ user, onLogout }) => {
           </div>
         ) : (
           <>
-            {/* Home Tab - Candidate Data Table */}
-            {activeTab === 'home' && dashboardData && (
+            {/* Home Tab - Simple Welcome Message */}
+            {activeTab === 'home' && (
               <div className="home-section">
-                <h2>📊 Dashboard Overview</h2>
-                
-                {/* Statistics Cards */}
-                <div className="dashboard-stats">
-                  <div className="stat-card-large">
-                    <div className="stat-icon-large">👥</div>
-                    <div className="stat-content">
-                      <div className="stat-number-large">{dashboardData.totalCandidates || 0}</div>
-                      <div className="stat-label-large">Total Candidates</div>
-                    </div>
-                  </div>
-                  
-                  <div className="stat-card-large">
-                    <div className="stat-icon-large">👨‍💼</div>
-                    <div className="stat-content">
-                      <div className="stat-number-large">{dashboardData.totalPanelists || 0}</div>
-                      <div className="stat-label-large">Total Panelists</div>
-                    </div>
-                  </div>
-                  
-                  <div className="stat-card-large">
-                    <div className="stat-icon-large">📅</div>
-                    <div className="stat-content">
-                      <div className="stat-number-large">{dashboardData.totalInterviews || 0}</div>
-                      <div className="stat-label-large">Total Interviews</div>
-                    </div>
-                  </div>
-                  
-                  <div className="stat-card-large">
-                    <div className="stat-icon-large">✅</div>
-                    <div className="stat-content">
-                      <div className="stat-number-large">{dashboardData.activePanelists || 0}</div>
-                      <div className="stat-label-large">Active Panelists</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Candidate Status Breakdown */}
-                {dashboardData.candidatesByStatus && (
-                  <div className="status-breakdown">
-                    <h3>📈 Candidates by Status</h3>
-                    <div className="status-cards">
-                      <div className="status-card status-applied-card">
-                        <div className="status-count">{dashboardData.candidatesByStatus.APPLIED || 0}</div>
-                        <div className="status-name">Applied</div>
-                      </div>
-                      <div className="status-card status-screening-card">
-                        <div className="status-count">{dashboardData.candidatesByStatus.SCREENING || 0}</div>
-                        <div className="status-name">Screening</div>
-                      </div>
-                      <div className="status-card status-interview-card">
-                        <div className="status-count">{dashboardData.candidatesByStatus.INTERVIEW || 0}</div>
-                        <div className="status-name">Interview</div>
-                      </div>
-                      <div className="status-card status-selected-card">
-                        <div className="status-count">{dashboardData.candidatesByStatus.SELECTED || 0}</div>
-                        <div className="status-name">Selected</div>
-                      </div>
-                      <div className="status-card status-rejected-card">
-                        <div className="status-count">{dashboardData.candidatesByStatus.REJECTED || 0}</div>
-                        <div className="status-name">Rejected</div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <h3 style={{ marginTop: '30px', color: '#667eea' }}>📋 Detailed Candidate Information</h3>
-                <div className="table-container">
-                  <table className="candidate-table">
-                    <thead>
-                      <tr>
-                        <th>Candidate Name</th>
-                        <th>Panelist Name</th>
-                        <th>JD Details</th>
-                        <th>Interview Date/Time</th>
-                        <th>Status</th>
-                        <th>Joining Date</th>
-                        <th>OLD CTC</th>
-                        <th>NEW CTC</th>
-                        <th>Employment Type</th>
-                        <th>Location</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dashboardData.dashboardRecords && dashboardData.dashboardRecords.length > 0 ? (
-                        dashboardData.dashboardRecords.map((record, index) => (
-                          <tr key={index}>
-                            <td>{record.candidateName || 'N/A'}</td>
-                            <td>{record.panelistName || 'Not Assigned'}</td>
-                            <td className="jd-cell" title={record.jdDetails}>
-                              {record.jdDetails ?
-                                (record.jdDetails.length > 50 ?
-                                  record.jdDetails.substring(0, 50) + '...' :
-                                  record.jdDetails) :
-                                'N/A'}
-                            </td>
-                            <td>
-                              {record.interviewDate && record.interviewTime ?
-                                `${formatDate(record.interviewDate)} ${record.interviewTime}` :
-                                'Not Scheduled'}
-                            </td>
-                            <td>
-                              <span className={`status-badge status-${getCandidateDisplayStatus({
-                                email: record.candidateEmail,
-                                status: record.status
-                              })?.toLowerCase().replace(/_/g, '-')}`}>
-                                {getCandidateDisplayStatus({
-                                  email: record.candidateEmail,
-                                  status: record.status
-                                })}
-                              </span>
-                            </td>
-                            <td>{formatDate(record.joiningDate)}</td>
-                            <td>{formatCurrency(record.oldCtc)}</td>
-                            <td>{formatCurrency(record.newCtc)}</td>
-                            <td>{record.employmentType || 'N/A'}</td>
-                            <td>{record.location || 'N/A'}</td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan="10" className="no-data">
-                            No candidate data available
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                <h2>👋 Welcome to HR Dashboard</h2>
+                <div style={{
+                  padding: '40px',
+                  textAlign: 'center',
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: '8px',
+                  marginTop: '20px'
+                }}>
+                  <p style={{ fontSize: '18px', color: '#666', marginBottom: '20px' }}>
+                    Welcome, {user.username}!
+                  </p>
+                  <p style={{ fontSize: '16px', color: '#888' }}>
+                    Use the tabs above to manage candidates, panelists, and interviews.
+                  </p>
                 </div>
               </div>
             )}
@@ -1406,9 +1527,6 @@ const HRDashboard = ({ user, onLogout }) => {
                           placeholder="candidate@example.com"
                           required
                         />
-                        <small style={{ color: '#666', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
-                          📧 OTP will be sent to this email for candidate login
-                        </small>
                       </div>
 
                       <div className="form-group">
@@ -2647,6 +2765,206 @@ const HRDashboard = ({ user, onLogout }) => {
                         <p className="hint-text">Click "Add New Panelist" to create your first panelist</p>
                       </div>
                     )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Interviews Tab */}
+            {activeTab === 'interviews' && (
+              <div className="interviews-section">
+                <h2>📅 All Interviews</h2>
+                <p className="section-description">
+                  View and manage all scheduled interviews ({allInterviews.length} total)
+                </p>
+
+                {/* Status Filter Dropdown */}
+                <div className="filter-section">
+                  <label htmlFor="status-filter">Filter by Status:</label>
+                  <select
+                    id="status-filter"
+                    value={interviewStatusFilter}
+                    onChange={(e) => setInterviewStatusFilter(e.target.value)}
+                    className="status-filter-dropdown"
+                  >
+                    <option value="ALL">All Statuses</option>
+                    <option value="SCHEDULED">Scheduled</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="CANCELLED">Cancelled</option>
+                    <option value="RESCHEDULED">Rescheduled</option>
+                  </select>
+                  <span className="filter-count">
+                    Showing {filteredInterviews.length} of {allInterviews.length} interviews
+                  </span>
+                </div>
+
+                {loadingInterviews ? (
+                  <div className="loading-message">
+                    <div className="spinner"></div>
+                    <p>Loading interviews...</p>
+                  </div>
+                ) : filteredInterviews && filteredInterviews.length > 0 ? (
+                  <div className="table-container">
+                    <table className="candidate-table interviews-table">
+                      <thead>
+                        <tr>
+                          <th>Interview ID</th>
+                          <th>Candidate Name</th>
+                          <th>Candidate Email</th>
+                          <th>Position</th>
+                          <th>Interview Date</th>
+                          <th>Time From</th>
+                          <th>Time To</th>
+                          <th>Status</th>
+                          <th>Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredInterviews.map((interview) => (
+                          <tr key={interview.id}>
+                            <td>{interview.id}</td>
+                            <td>{interview.candidateName || 'N/A'}</td>
+                            <td>{interview.candidateEmail || 'N/A'}</td>
+                            <td>{interview.position || 'N/A'}</td>
+                            <td>
+                              {interview.interviewDate ?
+                                new Date(interview.interviewDate).toLocaleDateString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : 'N/A'}
+                            </td>
+                            <td>
+                              {interview.interviewTimeFrom || 'N/A'}
+                            </td>
+                            <td>
+                              {interview.interviewTimeTo || 'N/A'}
+                            </td>
+                            <td>
+                              <span className={`interview-status-badge interview-${interview.status?.toLowerCase()}`}>
+                                {interview.status || 'N/A'}
+                              </span>
+                            </td>
+                            <td className="jd-cell" title={interview.notes}>
+                              {interview.notes ?
+                                (interview.notes.length > 50 ?
+                                  interview.notes.substring(0, 50) + '...' :
+                                  interview.notes) :
+                                'No notes'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="no-candidates-message">
+                    <p>📭 No interviews found</p>
+                    <p className="hint-text">
+                      {interviewStatusFilter !== 'ALL'
+                        ? `No interviews with status "${interviewStatusFilter}"`
+                        : 'Schedule interviews from the "Manage Candidates" tab'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Candidate Feedback Tab */}
+            {activeTab === 'candidateFeedback' && (
+              <div className="feedback-section">
+                <h2>📋 Candidate Feedback</h2>
+                <p className="section-description">
+                  View all technical feedback submitted by panelists ({allFeedbacks.length} total)
+                </p>
+
+                {feedbackError && (
+                  <div className="form-error-message">
+                    ❌ {feedbackError}
+                  </div>
+                )}
+
+                {loadingFeedbacks ? (
+                  <div className="loading-message">
+                    <div className="spinner"></div>
+                    <p>Loading feedbacks...</p>
+                  </div>
+                ) : allFeedbacks && allFeedbacks.length > 0 ? (
+                  <div className="table-container">
+                    <table className="candidate-table feedback-table">
+                      <thead>
+                        <tr>
+                          <th>Feedback ID</th>
+                          <th>Candidate Name</th>
+                          <th>Position</th>
+                          <th>Evaluation Date</th>
+                          <th>Overall Rating</th>
+                          <th>Recommendation</th>
+                          <th>Status</th>
+                          <th>Submitted At</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {allFeedbacks.map((feedback) => (
+                          <tr key={feedback.id}>
+                            <td>{feedback.id}</td>
+                            <td>{feedback.candidateName || ''}</td>
+                            <td>{feedback.jobRoleSpecification || ''}</td>
+                            <td>
+                              {feedback.evaluationDate ?
+                                new Date(feedback.evaluationDate).toLocaleDateString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                }) : ''}
+                            </td>
+                            <td>
+                              <span className="rating-badge">
+                                {feedback.overallRating ? `${feedback.overallRating}/10` : ''}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`recommendation-badge recommendation-${feedback.techPanelRecommendation?.toLowerCase()}`}>
+                                {feedback.techPanelRecommendation || ''}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={`status-badge status-${feedback.status?.toLowerCase()}`}>
+                                {feedback.status || ''}
+                              </span>
+                            </td>
+                            <td>
+                              {feedback.createdAt ?
+                                new Date(feedback.createdAt).toLocaleString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : ''}
+                            </td>
+                            <td>
+                              <button
+                                onClick={() => handleDownloadFeedbackPdf(feedback.id, feedback.candidateName)}
+                                className="download-button"
+                                title="Download PDF"
+                              >
+                                📥 Download PDF
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="no-candidates-message">
+                    <p>📭 No feedback submitted yet</p>
+                    <p className="hint-text">
+                      Feedback will appear here once panelists submit their technical assessments
+                    </p>
                   </div>
                 )}
               </div>

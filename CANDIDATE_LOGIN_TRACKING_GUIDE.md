@@ -17,8 +17,6 @@ This feature automatically tracks when candidates log in to the system and displ
 - **File**: `backend/src/main/java/com/login/service/CandidateService.java`
 - **New Methods**:
   - `trackCandidateLogin(String email)`: Updates login status when candidate logs in
-  - `trackCandidateLogout(String email)`: Updates login status when candidate logs out
-  - `getLoggedInCandidates()`: Returns list of all currently logged-in candidates
 
 #### AuthService Updates
 - **File**: `backend/src/main/java/com/login/service/AuthService.java`

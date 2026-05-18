@@ -35,6 +35,11 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
      * Find interviews by candidate email
      */
     List<Interview> findByCandidateEmail(String candidateEmail);
+    
+    /**
+     * Find interviews by candidate ID
+     */
+    List<Interview> findByCandidateId(Long candidateId);
 
     /**
      * Find interviews by status
@@ -50,6 +55,16 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
      * Count interviews by panelist ID and status
      */
     long countByPanelistIdAndStatus(Long panelistId, InterviewStatus status);
+    
+    /**
+     * Find all interviews by HR ID
+     */
+    List<Interview> findByHrId(Long hrId);
+    
+    /**
+     * Find interviews by HR ID and status
+     */
+    List<Interview> findByHrIdAndStatus(Long hrId, InterviewStatus status);
 }
 
 // Made with Bob

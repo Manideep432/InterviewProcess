@@ -80,6 +80,11 @@ public class HRService {
         dashboard.put("totalPanelists", panelists.size());
         dashboard.put("activePanelists", panelists.stream().filter(Panelist::isActive).count());
 
+        // Get panelists assigned by THIS HR specifically
+        List<Panelist> hrAssignedPanelists = panelistRepository.findByAssignedHr(hr);
+        dashboard.put("totalPanelistsAssignedByHR", hrAssignedPanelists.size());
+        dashboard.put("activePanelistsAssignedByHR", hrAssignedPanelists.stream().filter(Panelist::isActive).count());
+
         // Get ALL candidates in the system (not just managed by this HR)
         List<Candidate> candidates = candidateRepository.findAll();
         dashboard.put("candidates", candidates);
@@ -94,7 +99,19 @@ public class HRService {
         candidatesByStatus.put("REJECTED", candidates.stream().filter(c -> "REJECTED".equals(c.getStatus())).count());
         dashboard.put("candidatesByStatus", candidatesByStatus);
 
-        // Get all interviews for panelists under this HR
+        // Get all interviews scheduled by THIS HR
+        List<Interview> hrInterviews = interviewRepository.findByHrId(hrId);
+        dashboard.put("interviews", hrInterviews);
+        dashboard.put("totalInterviews", hrInterviews.size());
+        
+        // Interview statistics by status
+        Map<String, Long> interviewsByStatus = new HashMap<>();
+        interviewsByStatus.put("SCHEDULED", hrInterviews.stream().filter(i -> "SCHEDULED".equals(i.getStatus().toString())).count());
+        interviewsByStatus.put("COMPLETED", hrInterviews.stream().filter(i -> "COMPLETED".equals(i.getStatus().toString())).count());
+        interviewsByStatus.put("CANCELLED", hrInterviews.stream().filter(i -> "CANCELLED".equals(i.getStatus().toString())).count());
+        dashboard.put("interviewsByStatus", interviewsByStatus);
+
+        // Get all interviews for panelists under this HR (for backward compatibility)
         List<Long> panelistIds = panelists.stream()
                 .map(p -> p.getUser().getId())
                 .collect(Collectors.toList());
@@ -103,8 +120,6 @@ public class HRService {
         for (Long panelistId : panelistIds) {
             allInterviews.addAll(interviewRepository.findByPanelistId(panelistId));
         }
-        dashboard.put("interviews", allInterviews);
-        dashboard.put("totalInterviews", allInterviews.size());
 
         // Build comprehensive dashboard data with all required fields
         List<Map<String, Object>> dashboardRecords = new ArrayList<>();
@@ -971,7 +986,7 @@ public class HRService {
         // Create interview record
         Interview interview = new Interview();
         interview.setHrId(hrId);
-        interview.setPanelistId(panelistUser.getId());
+        interview.setPanelistId(panelist.getId()); // ✅ FIX: Use Panelist ID, not User ID
         interview.setCandidateId(candidateId);
         interview.setCandidateName(candidate.getName());
         interview.setCandidateEmail(candidate.getEmail());
