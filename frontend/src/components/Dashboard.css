@@ -1,0 +1,253 @@
+/* Dashboard Component Styles - Blue Theme */
+
+.dashboard-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.dashboard-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 600px;
+  padding: 40px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #0000ff;
+}
+
+.dashboard-header h2 {
+  color: #0000ff;
+  font-size: 32px;
+  margin: 0 0 10px 0;
+  font-weight: 700;
+}
+
+.dashboard-header p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+.user-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 10px;
+  padding: 25px;
+  margin-bottom: 30px;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(0, 0, 255, 0.1);
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  color: #0000ff;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.info-value {
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.dashboard-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.logout-button {
+  background-color: #0000ff;
+  color: white;
+  padding: 14px 40px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: #0000cc;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 255, 0.3);
+}
+
+.logout-button:active {
+  transform: translateY(0);
+}
+
+.dashboard-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.dashboard-footer p {
+  color: #666;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+.dashboard-footer .tech-stack {
+  color: #0000ff;
+  font-size: 13px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .dashboard-card {
+    padding: 30px 20px;
+  }
+
+  .dashboard-header h2 {
+    font-size: 26px;
+  }
+
+  .user-info {
+    padding: 20px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .logout-button {
+    padding: 12px 30px;
+    font-size: 14px;
+  }
+
+/* Dashboard Tabs */
+.dashboard-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #666;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+  bottom: -2px;
+}
+
+.tab-button:hover {
+  color: #0000ff;
+  background: rgba(0, 0, 255, 0.05);
+}
+
+.tab-button.active {
+  color: #0000ff;
+  border-bottom-color: #0000ff;
+}
+
+.security-section {
+  margin-top: 20px;
+}
+
+/* Feedback Section */
+.feedback-section {
+  margin-top: 20px;
+  padding: 20px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 10px;
+}
+
+.feedback-section h3 {
+  color: #0000ff;
+  font-size: 24px;
+  margin: 0 0 15px 0;
+  font-weight: 600;
+}
+
+.feedback-section p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.feedback-textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
+}
+
+.feedback-textarea:focus {
+  outline: none;
+  border-color: #0000ff;
+}
+
+.submit-button {
+  background-color: #0000ff;
+  color: white;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 15px;
+}
+
+.submit-button:hover {
+  background-color: #0000cc;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 255, 0.3);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+}
+
+/* Made with Bob */
