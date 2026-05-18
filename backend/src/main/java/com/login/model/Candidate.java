@@ -1,5 +1,6 @@
 package com.login.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -49,10 +50,12 @@ public class Candidate {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "hr_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User hr; // HR who manages this candidate
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_panelist_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User assignedPanelist; // Panelist assigned to interview this candidate
 
     // New fields for HR Dashboard

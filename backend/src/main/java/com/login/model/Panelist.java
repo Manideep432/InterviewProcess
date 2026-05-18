@@ -31,6 +31,13 @@ public class Panelist {
     @JsonIgnoreProperties({"password", "mfaSecret", "createdAt", "updatedAt", "active", "mfaEnabled", "hibernateLazyInitializer", "handler"})
     private User assignedHr; // HR who assigned this panelist
 
+    // Personal Information
+    @Column(length = 100)
+    private String fullName;
+
+    @Column(length = 100)
+    private String email;
+
     @NotBlank(message = "Specialization is required")
     @Size(max = 100, message = "Specialization must not exceed 100 characters")
     @Column(nullable = false, length = 100)
@@ -316,6 +323,22 @@ public class Panelist {
 
     public void setSlackHandle(String slackHandle) {
         this.slackHandle = slackHandle;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     @Override

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        .result {
+            background: white;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Backend API Diagnostic Tool</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check Backend is Running</h2>
+        <button onclick="testBackend()">Test Backend Connection</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Check Authentication Token</h2>
+        <button onclick="checkToken()">Check Token</button>
+        <div id="token-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Test HR Dashboard API</h2>
+        <p>Enter HR User ID: <input type="number" id="hrId" value="1" /></p>
+        <button onclick="testDashboardAPI()">Test Dashboard API</button>
+        <div id="dashboard-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Check Database</h2>
+        <button onclick="openH2Console()">Open H2 Console</button>
+        <p style="font-size: 12px; color: #666;">
+            JDBC URL: jdbc:h2:mem:logindb<br>
+            Username: sa<br>
+            Password: (leave empty)
+        </p>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8081';
+
+        async function testBackend() {
+            const result = document.getElementById('backend-result');
+            result.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'OPTIONS'
+                });
+                
+                result.innerHTML = `<span class="success">✅ Backend is running!</span>\n`;
+                result.innerHTML += `Status: ${response.status}\n`;
+                result.innerHTML += `CORS Headers: ${response.headers.get('access-control-allow-origin')}`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Backend connection failed!</span>\n`;
+                result.innerHTML += `Error: ${error.message}\n\n`;
+                result.innerHTML += `Make sure backend is running on port 8081:\n`;
+                result.innerHTML += `cd backend && mvn spring-boot:run`;
+            }
+        }
+
+        function checkToken() {
+            const result = document.getElementById('token-result');
+            const token = localStorage.getItem('token');
+            const user = localStorage.getItem('user');
+            
+            if (token) {
+                result.innerHTML = `<span class="success">✅ Token found!</span>\n\n`;
+                result.innerHTML += `Token: ${token.substring(0, 50)}...\n\n`;
+                if (user) {
+                    result.innerHTML += `User: ${user}`;
+                }
+            } else {
+                result.innerHTML = `<span class="error">❌ No token found!</span>\n\n`;
+                result.innerHTML += `Please login first at: http://localhost:3000`;
+            }
+        }
+
+        async function testDashboardAPI() {
+            const result = document.getElementById('dashboard-result');
+            const hrId = document.getElementById('hrId').value;
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                result.innerHTML = `<span class="error">❌ No token! Please login first.</span>`;
+                return;
+            }
+            
+            result.innerHTML = 'Testing dashboard API...';
+            
+            try {
+                const response = await fetch(`${API_URL}/api/hr/${hrId}/dashboard`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    credentials: 'include'
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    result.innerHTML = `<span class="success">✅ API call successful!</span>\n\n`;
+                    result.innerHTML += `Status: ${response.status}\n\n`;
+                    result.innerHTML += `Response:\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    result.innerHTML = `<span class="error">❌ API call failed!</span>\n\n`;
+                    result.innerHTML += `Status: ${response.status}\n\n`;
+                    result.innerHTML += `Response:\n${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ Request failed!</span>\n\n`;
+                result.innerHTML += `Error: ${error.message}\n\n`;
+                result.innerHTML += `This usually means:\n`;
+                result.innerHTML += `1. Backend is not running\n`;
+                result.innerHTML += `2. CORS issue\n`;
+                result.innerHTML += `3. Network error`;
+            }
+        }
+
+        function openH2Console() {
+            window.open('http://localhost:8081/h2-console', '_blank');
+        }
+
+        // Auto-run tests on load
+        window.onload = function() {
+            console.log('API Test Page Loaded');
+            console.log('Token:', localStorage.getItem('token') ? 'Found' : 'Not found');
+        };
+    </script>
+</body>
+</html>

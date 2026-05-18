@@ -48,8 +48,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/panelists/create", "/api/panelists/all", "/api/panelists/*/toggle-status", "/api/panelists/*/", "/api/panelists/hr/**").hasAnyAuthority("ROLE_HR", "HR")
                 // Panelists can access their own profile and data
                 .requestMatchers("/api/panelists/**").hasAnyAuthority("ROLE_PANELIST", "PANELIST", "ROLE_HR", "HR")
-                .requestMatchers("/api/candidates/**").hasAnyAuthority("ROLE_CANDIDATE", "CANDIDATE")
+                .requestMatchers("/api/candidates/**").hasAnyAuthority("ROLE_CANDIDATE", "CANDIDATE", "ROLE_HR", "HR")
+                // Allow all authenticated users to access interviews (HR, PANELIST, CANDIDATE)
                 .requestMatchers("/api/interviews/**").authenticated()
+                .requestMatchers("/api/meetings/**").authenticated()
                 .requestMatchers("/api/chat/**").authenticated()
                 .anyRequest().authenticated()
             )
@@ -65,10 +67,17 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // Use allowedOriginPatterns for better compatibility with credentials
+        configuration.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "http://127.0.0.1:3000"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList(
+            "Authorization",
+            "Content-Type",
+            "Accept",
+            "X-Requested-With"
+        ));
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

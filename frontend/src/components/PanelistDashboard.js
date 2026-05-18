@@ -62,15 +62,39 @@ const PanelistDashboard = ({ user, onLogout }) => {
 
   const loadInterviews = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/interviews/panelist/${user.id}`, {
-        headers: {
-          'Authorization': `Bearer ${authService.getToken()}`
+      // First, get the panelist ID from the panelist data
+      if (!panelistData) {
+        // If panelist data not loaded yet, try to load it first
+        const panelistResponse = await fetch(`${API_URL}/api/panelists/user/${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${authService.getToken()}`
+          }
+        });
+        const panelistResult = await panelistResponse.json();
+        if (panelistResult.success && panelistResult.panelist) {
+          setPanelistData(panelistResult.panelist);
+          // Now fetch interviews using panelist ID
+          const response = await fetch(`${API_URL}/api/interviews/panelist/${panelistResult.panelist.id}`, {
+            headers: {
+              'Authorization': `Bearer ${authService.getToken()}`
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setInterviews(data.interviews || []);
+          }
         }
-      });
-      
-      const data = await response.json();
-      if (data.success) {
-        setInterviews(data.interviews || []);
+      } else {
+        // Panelist data already loaded, use panelist ID
+        const response = await fetch(`${API_URL}/api/interviews/panelist/${panelistData.id}`, {
+          headers: {
+            'Authorization': `Bearer ${authService.getToken()}`
+          }
+        });
+        const data = await response.json();
+        if (data.success) {
+          setInterviews(data.interviews || []);
+        }
       }
     } catch (err) {
       console.error('Error loading interviews:', err);

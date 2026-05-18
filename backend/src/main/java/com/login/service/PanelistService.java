@@ -31,29 +31,67 @@ public class PanelistService {
      * Create a new panelist (assigned by HR)
      */
     public Panelist createPanelist(Long userId, Long hrId, String specialization, Integer experienceYears, String expertise) {
+        System.out.println("=== PanelistService.createPanelist ===");
+        System.out.println("userId: " + userId);
+        System.out.println("hrId: " + hrId);
+        System.out.println("specialization: " + specialization);
+        
+        // Validate specialization
+        if (specialization == null || specialization.trim().isEmpty()) {
+            throw new RuntimeException("Specialization is required and cannot be empty");
+        }
+        
+        // Find user
         Optional<User> userOpt = userRepository.findById(userId);
-        if (userOpt.isEmpty() || !"PANELIST".equals(userOpt.get().getRole())) {
-            throw new RuntimeException("Invalid user or user is not a PANELIST");
+        if (userOpt.isEmpty()) {
+            System.err.println("User not found with ID: " + userId);
+            throw new RuntimeException("User not found with ID: " + userId);
         }
         
+        User user = userOpt.get();
+        System.out.println("Found user: " + user.getUsername() + " with role: " + user.getRole());
+        
+        if (!"PANELIST".equals(user.getRole())) {
+            System.err.println("User role is not PANELIST. Current role: " + user.getRole());
+            throw new RuntimeException("User is not a PANELIST. Current role: " + user.getRole());
+        }
+        
+        // Find HR
         Optional<User> hrOpt = userRepository.findById(hrId);
-        if (hrOpt.isEmpty() || !"HR".equals(hrOpt.get().getRole())) {
-            throw new RuntimeException("Invalid HR ID");
+        if (hrOpt.isEmpty()) {
+            System.err.println("HR not found with ID: " + hrId);
+            throw new RuntimeException("HR not found with ID: " + hrId);
         }
         
-        if (panelistRepository.existsByUser(userOpt.get())) {
+        User hr = hrOpt.get();
+        System.out.println("Found HR: " + hr.getUsername() + " with role: " + hr.getRole());
+        
+        if (!"HR".equals(hr.getRole())) {
+            System.err.println("HR role is not HR. Current role: " + hr.getRole());
+            throw new RuntimeException("Invalid HR ID. User is not an HR. Current role: " + hr.getRole());
+        }
+        
+        // Check if panelist already exists
+        if (panelistRepository.existsByUser(user)) {
+            System.err.println("User is already registered as a panelist");
             throw new RuntimeException("This user is already registered as a panelist");
         }
         
+        // Create panelist
         Panelist panelist = new Panelist();
-        panelist.setUser(userOpt.get());
-        panelist.setAssignedHr(hrOpt.get());
-        panelist.setSpecialization(specialization);
+        panelist.setUser(user);
+        panelist.setAssignedHr(hr);
+        panelist.setSpecialization(specialization.trim());
         panelist.setExperienceYears(experienceYears);
         panelist.setExpertise(expertise);
         panelist.setActive(true);
         
-        return panelistRepository.save(panelist);
+        System.out.println("Saving panelist to database...");
+        Panelist saved = panelistRepository.save(panelist);
+        System.out.println("Panelist saved successfully with ID: " + saved.getId());
+        System.out.println("======================================");
+        
+        return saved;
     }
 
     /**

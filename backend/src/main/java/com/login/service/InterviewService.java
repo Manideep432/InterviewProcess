@@ -1,16 +1,24 @@
 package com.login.service;
 
+import com.login.dto.CandidateInterviewDTO;
 import com.login.model.Candidate;
+import com.login.model.HRProfile;
 import com.login.model.Interview;
 import com.login.model.Interview.InterviewStatus;
+import com.login.model.Panelist;
+import com.login.model.User;
 import com.login.repository.CandidateRepository;
+import com.login.repository.HRProfileRepository;
 import com.login.repository.InterviewRepository;
+import com.login.repository.PanelistRepository;
+import com.login.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +35,15 @@ public class InterviewService {
 
     @Autowired
     private CandidateRepository candidateRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
+    
+    @Autowired
+    private HRProfileRepository hrProfileRepository;
+    
+    @Autowired
+    private PanelistRepository panelistRepository;
 
     /**
      * Schedule a new interview
@@ -236,6 +253,136 @@ public class InterviewService {
         }
 
         return interviewRepository.save(interview);
+    }
+    
+    /**
+     * Get candidate interviews with HR and panelist details
+     */
+    @Transactional(readOnly = true)
+    public List<CandidateInterviewDTO> getCandidateInterviewsWithDetails(Long candidateId) {
+        List<Interview> interviews = interviewRepository.findByCandidateId(candidateId);
+        List<CandidateInterviewDTO> interviewDTOs = new ArrayList<>();
+        
+        for (Interview interview : interviews) {
+            CandidateInterviewDTO dto = new CandidateInterviewDTO();
+            
+            // Set interview details
+            dto.setInterviewId(interview.getId());
+            dto.setPosition(interview.getPosition());
+            dto.setInterviewDate(interview.getInterviewDate());
+            dto.setInterviewTimeFrom(interview.getInterviewTimeFrom());
+            dto.setInterviewTimeTo(interview.getInterviewTimeTo());
+            dto.setStatus(interview.getStatus().toString());
+            dto.setNotes(interview.getNotes());
+            dto.setFeedback(interview.getFeedback());
+            dto.setMeetingLink(interview.getMeetingLink());
+            dto.setMeetingRoomId(interview.getMeetingRoomId());
+            
+            // Fetch and set HR details
+            Optional<User> hrUser = userRepository.findById(interview.getHrId());
+            if (hrUser.isPresent()) {
+                User hr = hrUser.get();
+                dto.setHrId(hr.getId());
+                dto.setHrEmail(hr.getEmail());
+                
+                // Try to get HR profile for additional details
+                Optional<HRProfile> hrProfile = hrProfileRepository.findByUserId(hr.getId());
+                if (hrProfile.isPresent()) {
+                    HRProfile profile = hrProfile.get();
+                    dto.setHrName(profile.getFullName());
+                    dto.setHrPhone(profile.getPhone());
+                    dto.setHrDesignation(profile.getDesignation());
+                } else {
+                    dto.setHrName(hr.getUsername());
+                }
+            }
+            
+            // Fetch and set Panelist details
+            Optional<Panelist> panelist = panelistRepository.findById(interview.getPanelistId());
+            if (panelist.isPresent()) {
+                Panelist p = panelist.get();
+                dto.setPanelistId(p.getId());
+                dto.setPanelistName(p.getFullName());
+                dto.setPanelistEmail(p.getEmail());
+            }
+            
+            interviewDTOs.add(dto);
+        }
+        
+        return interviewDTOs;
+    }
+    
+    /**
+     * Get candidate interviews by email with HR and panelist details
+     */
+    @Transactional(readOnly = true)
+    public List<CandidateInterviewDTO> getCandidateInterviewsByEmailWithDetails(String candidateEmail) {
+        List<Interview> interviews = interviewRepository.findByCandidateEmail(candidateEmail);
+        List<CandidateInterviewDTO> interviewDTOs = new ArrayList<>();
+        
+        for (Interview interview : interviews) {
+            CandidateInterviewDTO dto = new CandidateInterviewDTO();
+            
+            // Set interview details
+            dto.setInterviewId(interview.getId());
+            dto.setPosition(interview.getPosition());
+            dto.setInterviewDate(interview.getInterviewDate());
+            dto.setInterviewTimeFrom(interview.getInterviewTimeFrom());
+            dto.setInterviewTimeTo(interview.getInterviewTimeTo());
+            dto.setStatus(interview.getStatus().toString());
+            dto.setNotes(interview.getNotes());
+            dto.setFeedback(interview.getFeedback());
+            dto.setMeetingLink(interview.getMeetingLink());
+            dto.setMeetingRoomId(interview.getMeetingRoomId());
+            
+            // Fetch and set HR details
+            Optional<User> hrUser = userRepository.findById(interview.getHrId());
+            if (hrUser.isPresent()) {
+                User hr = hrUser.get();
+                dto.setHrId(hr.getId());
+                dto.setHrEmail(hr.getEmail());
+                
+                // Try to get HR profile for additional details
+                Optional<HRProfile> hrProfile = hrProfileRepository.findByUserId(hr.getId());
+                if (hrProfile.isPresent()) {
+                    HRProfile profile = hrProfile.get();
+                    dto.setHrName(profile.getFullName());
+                    dto.setHrPhone(profile.getPhone());
+                    dto.setHrDesignation(profile.getDesignation());
+                } else {
+                    dto.setHrName(hr.getUsername());
+                }
+            }
+            
+            // Fetch and set Panelist details
+            Optional<Panelist> panelist = panelistRepository.findById(interview.getPanelistId());
+            if (panelist.isPresent()) {
+                Panelist p = panelist.get();
+                dto.setPanelistId(p.getId());
+                dto.setPanelistName(p.getFullName());
+                dto.setPanelistEmail(p.getEmail());
+            }
+            
+            interviewDTOs.add(dto);
+        }
+        
+        return interviewDTOs;
+    }
+    
+    /**
+     * Get all interviews for an HR
+     */
+    @Transactional(readOnly = true)
+    public List<Interview> getInterviewsByHrId(Long hrId) {
+        return interviewRepository.findByHrId(hrId);
+    }
+    
+    /**
+     * Get interviews by HR ID and status
+     */
+    @Transactional(readOnly = true)
+    public List<Interview> getInterviewsByHrIdAndStatus(Long hrId, InterviewStatus status) {
+        return interviewRepository.findByHrIdAndStatus(hrId, status);
     }
 }
 

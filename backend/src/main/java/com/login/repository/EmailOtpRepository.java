@@ -21,11 +21,20 @@ public interface EmailOtpRepository extends JpaRepository<EmailOtp, Long> {
 
     /**
      * Find the latest valid OTP for an email and purpose
+     * Returns only the first result to avoid "Query did not return a unique result" error
      */
     @Query("SELECT o FROM EmailOtp o WHERE o.email = ?1 AND o.purpose = ?2 " +
            "AND o.isUsed = false AND o.expiresAt > ?3 " +
            "ORDER BY o.createdAt DESC")
-    Optional<EmailOtp> findLatestValidOtp(String email, String purpose, LocalDateTime now);
+    List<EmailOtp> findLatestValidOtpList(String email, String purpose, LocalDateTime now);
+    
+    /**
+     * Find the latest valid OTP for an email and purpose (returns Optional)
+     */
+    default Optional<EmailOtp> findLatestValidOtp(String email, String purpose, LocalDateTime now) {
+        List<EmailOtp> otps = findLatestValidOtpList(email, purpose, now);
+        return otps.isEmpty() ? Optional.empty() : Optional.of(otps.get(0));
+    }
 
     /**
      * Find all OTPs for an email

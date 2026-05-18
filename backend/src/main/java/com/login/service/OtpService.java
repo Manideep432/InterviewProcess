@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 
@@ -37,6 +38,15 @@ public class OtpService {
     public String generateAndSendLoginOtp(String email, String username) {
         // Check rate limiting
         checkRateLimit(email);
+
+        // Invalidate any existing unused OTPs for this email and purpose to prevent duplicates
+        List<EmailOtp> existingOtps = otpRepository.findByEmailAndPurposeOrderByCreatedAtDesc(email, "LOGIN");
+        for (EmailOtp existingOtp : existingOtps) {
+            if (!existingOtp.isUsed()) {
+                existingOtp.markAsUsed();
+                otpRepository.save(existingOtp);
+            }
+        }
 
         // Generate OTP
         String otp = generateOtp();
