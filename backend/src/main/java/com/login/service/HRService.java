@@ -322,6 +322,8 @@ public class HRService {
             details.put("newCtc", candidate.getNewCtc());
             details.put("employmentType", candidate.getEmploymentType());
             details.put("location", candidate.getLocation());
+            details.put("jrs", candidate.getJrs());
+            details.put("candidateType", candidate.getCandidateType());
             details.put("createdAt", candidate.getCreatedAt());
             
             // Assigned panelist info
@@ -483,6 +485,12 @@ public class HRService {
         candidate.setHr(hr);
 
         // Set optional fields
+        if (request.get("jrs") != null) {
+            candidate.setJrs((String) request.get("jrs"));
+        }
+        if (request.get("candidateType") != null) {
+            candidate.setCandidateType((String) request.get("candidateType"));
+        }
         if (request.get("experienceYears") != null) {
             candidate.setExperienceYears(Integer.parseInt(request.get("experienceYears").toString()));
         }
@@ -572,6 +580,8 @@ public class HRService {
             details.put("jdDetails", candidate.getJdDetails());
             details.put("employmentType", candidate.getEmploymentType());
             details.put("location", candidate.getLocation());
+            details.put("jrs", candidate.getJrs());
+            details.put("candidateType", candidate.getCandidateType());
             details.put("hrMailId", candidate.getHrMailId());
             details.put("joiningDate", candidate.getJoiningDate());
             details.put("oldCtc", candidate.getOldCtc());
@@ -656,6 +666,12 @@ public class HRService {
         }
         if (updates.containsKey("hrMailId")) {
             candidate.setHrMailId((String) updates.get("hrMailId"));
+        }
+        if (updates.containsKey("jrs")) {
+            candidate.setJrs((String) updates.get("jrs"));
+        }
+        if (updates.containsKey("candidateType")) {
+            candidate.setCandidateType((String) updates.get("candidateType"));
         }
 
         Candidate savedCandidate = candidateRepository.save(candidate);

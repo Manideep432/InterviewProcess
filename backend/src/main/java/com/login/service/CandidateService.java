@@ -185,6 +185,8 @@ public class CandidateService {
         candidate.setEmail(updatedCandidate.getEmail());
         candidate.setPhone(updatedCandidate.getPhone());
         candidate.setPosition(updatedCandidate.getPosition());
+        candidate.setJrs(updatedCandidate.getJrs());
+        candidate.setCandidateType(updatedCandidate.getCandidateType());
         candidate.setExperienceYears(updatedCandidate.getExperienceYears());
         candidate.setSkills(updatedCandidate.getSkills());
         

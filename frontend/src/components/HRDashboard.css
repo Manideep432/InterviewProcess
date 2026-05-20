@@ -423,8 +423,9 @@
 /* Profile Section */
 .profile-section {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 20px;
+  flex-direction: column;
 }
 
 .profile-card {
@@ -704,7 +705,7 @@
 }
 
 .form-section h3 {
-  color: #667eea;
+  color: white;
   margin-bottom: 20px;
   font-size: 1.3rem;
   border-bottom: 2px solid #e0e0e0;
@@ -1000,7 +1001,7 @@
 }
 
 .profile-form .form-section h3 {
-  color: #667eea;
+  color: white;
   margin-bottom: 15px;
   font-size: 1.3rem;
   display: flex;
@@ -1556,5 +1557,172 @@
   
   .detail-value {
     text-align: left;
+  }
+}
+
+
+/* Dashboard Statistics Cards - Home Tab */
+.dashboard-stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
+  margin: 30px 0;
+}
+
+.dashboard-stat-card {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, var(--card-color-1), var(--card-color-2));
+}
+
+.dashboard-stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* Candidates Card - Purple/Blue gradient */
+.candidates-card {
+  --card-color-1: #667eea;
+  --card-color-2: #764ba2;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+/* Panelists Card - Green gradient */
+.panelists-card {
+  --card-color-1: #11998e;
+  --card-color-2: #38ef7d;
+  background: linear-gradient(135deg, rgba(17, 153, 142, 0.05) 0%, rgba(56, 239, 125, 0.05) 100%);
+}
+
+.stat-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.candidates-card .stat-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.panelists-card .stat-icon {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  box-shadow: 0 8px 20px rgba(17, 153, 142, 0.3);
+}
+
+.icon-emoji {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin: 0 0 10px 0;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 3rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, var(--card-color-1), var(--card-color-2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+/* Welcome Message Box */
+.welcome-message-box {
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  margin-top: 25px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.welcome-greeting {
+  font-size: 1.3rem;
+  color: #333;
+  margin: 0 0 15px 0;
+}
+
+.welcome-greeting strong {
+  color: #667eea;
+  font-weight: 700;
+}
+
+.welcome-hint {
+  font-size: 1rem;
+  color: #888;
+  margin: 0;
+}
+
+/* Responsive Design for Dashboard Stats */
+@media (max-width: 768px) {
+  .dashboard-stats-container {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  
+  .dashboard-stat-card {
+    padding: 25px;
+  }
+  
+  .stat-icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .stat-value {
+    font-size: 2.5rem;
+  }
+  
+  .stat-title {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .welcome-greeting {
+    font-size: 1.1rem;
+  }
+  
+  .welcome-hint {
+    font-size: 0.9rem;
   }
 }

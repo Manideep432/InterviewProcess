@@ -81,6 +81,12 @@ public class Candidate {
     private String employmentType; // FULL_TIME, PART_TIME, CONTRACT, INTERN
 
     @Column(length = 100)
+    private String jrs; // Job Requisition System or Job Reference System
+
+    @Column(name = "candidate_type", length = 50)
+    private String candidateType; // INTERNAL, EXTERNAL, REFERRAL, etc.
+
+    @Column(length = 100)
     private String location;
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -259,6 +265,22 @@ public class Candidate {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getJrs() {
+        return jrs;
+    }
+
+    public void setJrs(String jrs) {
+        this.jrs = jrs;
+    }
+
+    public String getCandidateType() {
+        return candidateType;
+    }
+
+    public void setCandidateType(String candidateType) {
+        this.candidateType = candidateType;
     }
 
     public BigDecimal getCurrentCtc() {
