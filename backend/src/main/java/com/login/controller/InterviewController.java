@@ -4,6 +4,7 @@ import com.login.dto.CandidateInterviewDTO;
 import com.login.model.Interview;
 import com.login.model.Interview.InterviewStatus;
 import com.login.service.InterviewService;
+import com.login.service.InterviewSchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +27,9 @@ public class InterviewController {
 
     @Autowired
     private InterviewService interviewService;
+
+    @Autowired
+    private InterviewSchedulerService interviewSchedulerService;
 
     /**
      * Schedule a new interview
@@ -449,6 +453,27 @@ public class InterviewController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "success", false,
                 "message", "Failed to fetch interviews: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Manually trigger update of expired interviews
+     * Checks all SCHEDULED interviews and marks them as COMPLETED if their end time has passed
+     */
+    @PostMapping("/update-expired")
+    public ResponseEntity<?> updateExpiredInterviews() {
+        try {
+            int updatedCount = interviewSchedulerService.updateExpiredInterviews();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Interview statuses updated successfully",
+                "updatedCount", updatedCount
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Failed to update interview statuses: " + e.getMessage()
             ));
         }
     }

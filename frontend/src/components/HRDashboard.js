@@ -107,6 +107,7 @@ const HRDashboard = ({ user, onLogout }) => {
   const [filteredInterviews, setFilteredInterviews] = useState([]);
   const [interviewStatusFilter, setInterviewStatusFilter] = useState('ALL');
   const [loadingInterviews, setLoadingInterviews] = useState(false);
+  const [lastInterviewUpdate, setLastInterviewUpdate] = useState(null);
 
   // Candidate Feedback state
   const [allFeedbacks, setAllFeedbacks] = useState([]);
@@ -156,6 +157,26 @@ const HRDashboard = ({ user, onLogout }) => {
     } else if (activeTab === 'candidateFeedback') {
       fetchAllFeedbacks();
     }
+  }, [activeTab]);
+  
+  // Auto-refresh interviews every 60 seconds when on interviews tab
+  useEffect(() => {
+    let intervalId;
+    
+    if (activeTab === 'interviews') {
+      // Set up interval to refresh interviews every 60 seconds
+      intervalId = setInterval(() => {
+        console.log('Auto-refreshing interviews...');
+        fetchAllInterviews();
+      }, 60000); // 60 seconds
+    }
+    
+    // Cleanup interval on unmount or when tab changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [activeTab]);
   
   useEffect(() => {
@@ -369,6 +390,7 @@ const HRDashboard = ({ user, onLogout }) => {
       if (result.ok && result.data.success) {
         console.log('All interviews received:', result.data);
         setAllInterviews(result.data.interviews || []);
+        setLastInterviewUpdate(new Date());
       } else {
         setError(result.data.message || 'Failed to fetch interviews');
       }
@@ -378,6 +400,11 @@ const HRDashboard = ({ user, onLogout }) => {
     } finally {
       setLoadingInterviews(false);
     }
+  };
+  
+  const handleManualRefreshInterviews = async () => {
+    console.log('Manual refresh triggered');
+    await fetchAllInterviews();
   };
 
   const handleLogout = () => {
@@ -2295,10 +2322,12 @@ const HRDashboard = ({ user, onLogout }) => {
                                       <span className={`interview-status-badge interview-${latestInterview.status?.toLowerCase()}`}>
                                         {latestInterview.status}
                                       </span>
-                                      <div className="interview-details">
-                                        <small>📅 {latestInterview.interviewDate}</small>
-                                        <small>🕐 {latestInterview.interviewTimeFrom} - {latestInterview.interviewTimeTo}</small>
-                                      </div>
+                                      {latestInterview.status !== 'COMPLETED' && (
+                                        <div className="interview-details">
+                                          <small>📅 {latestInterview.interviewDate}</small>
+                                          <small>🕐 {latestInterview.interviewTimeFrom} - {latestInterview.interviewTimeTo}</small>
+                                        </div>
+                                      )}
                                       {interviews.length > 1 && (
                                         <small className="interview-count">+{interviews.length - 1} more</small>
                                       )}
@@ -2514,10 +2543,40 @@ const HRDashboard = ({ user, onLogout }) => {
             {/* Interviews Tab */}
             {activeTab === 'interviews' && (
               <div className="interviews-section">
-                <h2>📅 All Interviews</h2>
-                <p className="section-description">
-                  View and manage all scheduled interviews ({allInterviews.length} total)
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <h2>📅 All Interviews</h2>
+                    <p className="section-description">
+                      View and manage all scheduled interviews ({allInterviews.length} total)
+                      {lastInterviewUpdate && (
+                        <span style={{ marginLeft: '1rem', fontSize: '0.85em', color: '#666' }}>
+                          Last updated: {lastInterviewUpdate.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleManualRefreshInterviews}
+                    disabled={loadingInterviews}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loadingInterviews ? 'not-allowed' : 'pointer',
+                      fontSize: '0.9em',
+                      fontWeight: '500',
+                      opacity: loadingInterviews ? 0.6 : 1
+                    }}
+                  >
+                    {loadingInterviews ? '🔄 Refreshing...' : '🔄 Refresh Now'}
+                  </button>
+                </div>
 
                 {/* Status Filter Dropdown */}
                 <div className="filter-section">
@@ -2537,6 +2596,9 @@ const HRDashboard = ({ user, onLogout }) => {
                   </select>
                   <span className="filter-count">
                     Showing {filteredInterviews.length} of {allInterviews.length} interviews
+                  </span>
+                  <span style={{ marginLeft: '1rem', fontSize: '0.85em', color: '#666', fontStyle: 'italic' }}>
+                    ⏱️ Auto-refreshes every 60 seconds
                   </span>
                 </div>
 
