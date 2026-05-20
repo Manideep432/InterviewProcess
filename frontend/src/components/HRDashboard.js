@@ -1062,6 +1062,49 @@ const HRDashboard = ({ user, onLogout }) => {
     return candidate.status || latestInterview?.status || 'N/A';
   };
 
+  const candidateStatusConfig = [
+    { key: 'APPLIED', label: 'Applied', colorClass: 'bar-applied' },
+    { key: 'SCREENING', label: 'Screening', colorClass: 'bar-screening' },
+    { key: 'INTERVIEW', label: 'Interview', colorClass: 'bar-interview' },
+    { key: 'INTERVIEW_COMPLETED', label: 'Completed', colorClass: 'bar-completed' },
+    { key: 'SELECTED', label: 'Selected', colorClass: 'bar-selected' },
+    { key: 'REJECTED', label: 'Rejected', colorClass: 'bar-rejected' }
+  ];
+
+  const candidateStatusCounts = myCandidates.reduce((acc, candidate) => {
+    const status = getCandidateDisplayStatus(candidate);
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const candidateGraphData = candidateStatusConfig.map((status) => ({
+    ...status,
+    count: candidateStatusCounts[status.key] || 0
+  }));
+
+  const maxCandidateCount = Math.max(...candidateGraphData.map((item) => item.count), 1);
+
+  const panelistExperienceConfig = [
+    { key: '0-2', label: '0-2 Yrs', min: 0, max: 2, colorClass: 'bar-junior' },
+    { key: '3-5', label: '3-5 Yrs', min: 3, max: 5, colorClass: 'bar-mid' },
+    { key: '6-9', label: '6-9 Yrs', min: 6, max: 9, colorClass: 'bar-senior' },
+    { key: '10+', label: '10+ Yrs', min: 10, max: Infinity, colorClass: 'bar-lead' }
+  ];
+
+  const panelistGraphData = panelistExperienceConfig.map((range) => {
+    const count = myPanelists.filter((panelist) => {
+      const experience = Number(panelist.experienceYears || 0);
+      return experience >= range.min && experience <= range.max;
+    }).length;
+
+    return {
+      ...range,
+      count
+    };
+  });
+
+  const maxPanelistCount = Math.max(...panelistGraphData.map((item) => item.count), 1);
+
   return (
     <div className="hr-dashboard-container">
       <div className="hr-dashboard-header">
@@ -1176,6 +1219,62 @@ const HRDashboard = ({ user, onLogout }) => {
                       <p className="stat-value">
                         {myPanelists.length}
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="home-graphs-grid">
+                  <div className="graph-card">
+                    <div className="graph-card-header">
+                      <div>
+                        <h3>📈 Candidates Graph</h3>
+                        <p>Status-wise distribution of your candidates</p>
+                      </div>
+                      <span className="graph-total">Total: {myCandidates.length}</span>
+                    </div>
+
+                    <div className="graph-bars">
+                      {candidateGraphData.map((item) => (
+                        <div className="graph-bar-row" key={item.key}>
+                          <div className="graph-label-wrap">
+                            <span className="graph-label">{item.label}</span>
+                            <span className="graph-count">{item.count}</span>
+                          </div>
+                          <div className="graph-track">
+                            <div
+                              className={`graph-fill ${item.colorClass}`}
+                              style={{ width: `${(item.count / maxCandidateCount) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="graph-card">
+                    <div className="graph-card-header">
+                      <div>
+                        <h3>📊 Panelists Graph</h3>
+                        <p>Experience-wise distribution of your panelists</p>
+                      </div>
+                      <span className="graph-total">Total: {myPanelists.length}</span>
+                    </div>
+
+                    <div className="graph-bars">
+                      {panelistGraphData.map((item) => (
+                        <div className="graph-bar-row" key={item.key}>
+                          <div className="graph-label-wrap">
+                            <span className="graph-label">{item.label}</span>
+                            <span className="graph-count">{item.count}</span>
+                          </div>
+                          <div className="graph-track">
+                            <div
+                              className={`graph-fill ${item.colorClass}`}
+                              style={{ width: `${(item.count / maxPanelistCount) * 100}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
