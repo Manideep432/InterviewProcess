@@ -188,7 +188,7 @@ public class EmailService {
      * Build interview schedule email body for candidate
      */
     private String buildCandidateInterviewEmailBody(String candidateName, String interviewDate,
-                                                    String interviewTime, String position,
+                                                    String interviewTime, String jrs,
                                                     String panelistName) {
         return String.format(
             "Dear %s,\n\n" +
@@ -212,7 +212,7 @@ public class EmailService {
             "Login Microservice\n\n" +
             "---\n" +
             "This is an automated email. Please do not reply.",
-            candidateName, position, interviewDate, interviewTime, panelistName
+            candidateName, jrs, interviewDate, interviewTime, panelistName
         );
     }
 
@@ -221,7 +221,7 @@ public class EmailService {
      */
     private String buildPanelistInterviewEmailBody(String panelistName, String candidateName,
                                                    String candidateEmail, String interviewDate,
-                                                   String interviewTime, String position) {
+                                                   String interviewTime, String jrs) {
         return String.format(
             "Dear %s,\n\n" +
             "A new interview has been assigned to you!\n\n" +
@@ -241,7 +241,7 @@ public class EmailService {
             "Login Microservice\n\n" +
             "---\n" +
             "This is an automated email. Please do not reply.",
-            panelistName, candidateName, candidateEmail, position, interviewDate, interviewTime
+            panelistName, candidateName, candidateEmail, jrs, interviewDate, interviewTime
         );
     }
 
@@ -249,7 +249,7 @@ public class EmailService {
      * Send Technical Interview Assessment Form to HR with PDF attachment
      */
     public void sendInterviewFeedbackToHR(String hrEmail, String candidateName,
-                                          String panelistName, String position,
+                                          String panelistName, String jrs,
                                           String recommendation, byte[] pdfContent) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -258,7 +258,7 @@ public class EmailService {
             helper.setFrom(fromEmail);
             helper.setTo(hrEmail);
             helper.setSubject("Technical Interview Assessment - " + candidateName + " - " + recommendation);
-            helper.setText(buildInterviewFeedbackEmailBody(candidateName, panelistName, position, recommendation));
+            helper.setText(buildInterviewFeedbackEmailBody(candidateName, panelistName, jrs, recommendation));
             
             // Attach PDF
             String filename = "Technical_Interview_Assessment_" +
@@ -278,7 +278,7 @@ public class EmailService {
      * Build interview feedback email body for HR
      */
     private String buildInterviewFeedbackEmailBody(String candidateName, String panelistName,
-                                                   String position, String recommendation) {
+                                                   String jrs, String recommendation) {
         return String.format(
             "Dear HR,\n\n" +
             "A Technical Interview Assessment Form has been submitted by the panelist.\n\n" +
@@ -305,7 +305,7 @@ public class EmailService {
             "Login Microservice\n\n" +
             "---\n" +
             "This is an automated email. Please do not reply.",
-            candidateName, position, panelistName, recommendation
+            candidateName, jrs, panelistName, recommendation
         );
     }
 }

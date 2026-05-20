@@ -863,21 +863,65 @@
 }
 
 .edit-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
   color: white;
   border: none;
   padding: 8px 16px;
-  border-radius: 20px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 6px rgba(76, 175, 80, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .edit-button:hover {
+  background: linear-gradient(135deg, #45a049 0%, #3d8b40 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.edit-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(76, 175, 80, 0.3);
+}
+
+.delete-button {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(244, 67, 54, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.delete-button:hover {
+  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.delete-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+}
+
+/* Action buttons container */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .online-badge {

@@ -2161,11 +2161,11 @@ const HRDashboard = ({ user, onLogout }) => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="position-display">Position</label>
+                            <label htmlFor="jrs-display">JRS</label>
                             <input
                               type="text"
-                              id="position-display"
-                              value={schedulingInterview.position}
+                              id="jrs-display"
+                              value={schedulingInterview.jrs || schedulingInterview.position}
                               disabled
                               style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
                             />
@@ -2266,7 +2266,6 @@ const HRDashboard = ({ user, onLogout }) => {
                               <th>Name</th>
                               <th>Email</th>
                               <th>Phone</th>
-                              <th>Position</th>
                               <th>JRS</th>
                               <th>Candidate Type</th>
                               <th>Experience</th>
@@ -2286,7 +2285,6 @@ const HRDashboard = ({ user, onLogout }) => {
                                 <td>{candidate.name}</td>
                                 <td>{candidate.email}</td>
                                 <td>{candidate.phone}</td>
-                                <td>{candidate.position}</td>
                                 <td>{candidate.jrs || 'N/A'}</td>
                                 <td>{candidate.candidateType || 'N/A'}</td>
                                 <td>{candidate.experienceYears ? `${candidate.experienceYears} years` : 'N/A'}</td>
@@ -2329,7 +2327,7 @@ const HRDashboard = ({ user, onLogout }) => {
                                     {candidate.status}
                                   </span>
                                 </td>
-                                <td>
+                                <td className="action-buttons">
                                   <button
                                     onClick={() => handleEditCandidate(candidate)}
                                     className="edit-button"
@@ -2341,11 +2339,10 @@ const HRDashboard = ({ user, onLogout }) => {
                                     onClick={() => handleDeleteCandidate(candidate.id, candidate.name)}
                                     className="delete-button"
                                     title="Delete candidate"
-                                    style={{ marginLeft: '8px' }}
                                   >
-                                   🗑️ Delete
-                                 </button>
-                               </td>
+                                    🗑️ Delete
+                                  </button>
+                                </td>
                              </tr>
                            );
                            })}
@@ -2556,12 +2553,11 @@ const HRDashboard = ({ user, onLogout }) => {
                           <th>Interview ID</th>
                           <th>Candidate Name</th>
                           <th>Candidate Email</th>
-                          <th>Position</th>
+                          <th>JRS</th>
                           <th>Interview Date</th>
                           <th>Time From</th>
                           <th>Time To</th>
                           <th>Status</th>
-                          <th>Notes</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2570,7 +2566,7 @@ const HRDashboard = ({ user, onLogout }) => {
                             <td>{interview.id}</td>
                             <td>{interview.candidateName || 'N/A'}</td>
                             <td>{interview.candidateEmail || 'N/A'}</td>
-                            <td>{interview.position || 'N/A'}</td>
+                            <td>{interview.jrs || 'N/A'}</td>
                             <td>
                               {interview.interviewDate ?
                                 new Date(interview.interviewDate).toLocaleDateString('en-IN', {
@@ -2589,13 +2585,6 @@ const HRDashboard = ({ user, onLogout }) => {
                               <span className={`interview-status-badge interview-${interview.status?.toLowerCase()}`}>
                                 {interview.status || 'N/A'}
                               </span>
-                            </td>
-                            <td className="jd-cell" title={interview.notes}>
-                              {interview.notes ?
-                                (interview.notes.length > 50 ?
-                                  interview.notes.substring(0, 50) + '...' :
-                                  interview.notes) :
-                                'No notes'}
                             </td>
                           </tr>
                         ))}
@@ -2641,7 +2630,7 @@ const HRDashboard = ({ user, onLogout }) => {
                         <tr>
                           <th>Feedback ID</th>
                           <th>Candidate Name</th>
-                          <th>Position</th>
+                          <th>JRS</th>
                           <th>Evaluation Date</th>
                           <th>Overall Rating</th>
                           <th>Recommendation</th>

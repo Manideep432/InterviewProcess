@@ -1009,12 +1009,8 @@ public class HRService {
         interview.setInterviewDate(java.time.LocalDate.parse(interviewDate));
         interview.setInterviewTimeFrom(java.time.LocalTime.parse(interviewTimeFrom));
         interview.setInterviewTimeTo(java.time.LocalTime.parse(interviewTimeTo));
-        interview.setPosition(candidate.getPosition());
+        interview.setJrs(candidate.getJrs());
         interview.setStatus(Interview.InterviewStatus.SCHEDULED);
-        
-        if (request.containsKey("notes")) {
-            interview.setNotes((String) request.get("notes"));
-        }
 
         Interview savedInterview = interviewRepository.save(interview);
 
@@ -1026,37 +1022,49 @@ public class HRService {
             candidateRepository.save(candidate);
         }
 
-        // Send email notifications
-        try {
-            // Format time range for emails
-            String timeRange = interviewTimeFrom + " - " + interviewTimeTo;
-            
-            // Send to candidate
-            emailService.sendInterviewScheduleToCandidate(
-                candidate.getEmail(),
-                candidate.getName(),
-                interviewDate,
-                timeRange,
-                candidate.getPosition(),
-                panelistUser.getUsername()
-            );
+        // Send email notifications asynchronously to avoid blocking the response
+        final String finalInterviewDate = interviewDate;
+        final String finalInterviewTimeFrom = interviewTimeFrom;
+        final String finalInterviewTimeTo = interviewTimeTo;
+        final String candidateEmailFinal = candidate.getEmail();
+        final String candidateNameFinal = candidate.getName();
+        final String candidateJrsFinal = candidate.getJrs();
+        final String panelistEmailFinal = panelistUser.getEmail();
+        final String panelistNameFinal = panelistUser.getUsername();
+        
+        // Send emails in a separate thread to avoid timeout
+        new Thread(() -> {
+            try {
+                // Format time range for emails
+                String timeRange = finalInterviewTimeFrom + " - " + finalInterviewTimeTo;
+                
+                // Send to candidate
+                emailService.sendInterviewScheduleToCandidate(
+                    candidateEmailFinal,
+                    candidateNameFinal,
+                    finalInterviewDate,
+                    timeRange,
+                    candidateJrsFinal,
+                    panelistNameFinal
+                );
 
-            // Send to panelist
-            emailService.sendInterviewScheduleToPanelist(
-                panelistUser.getEmail(),
-                panelistUser.getUsername(),
-                candidate.getName(),
-                candidate.getEmail(),
-                interviewDate,
-                timeRange,
-                candidate.getPosition()
-            );
+                // Send to panelist
+                emailService.sendInterviewScheduleToPanelist(
+                    panelistEmailFinal,
+                    panelistNameFinal,
+                    candidateNameFinal,
+                    candidateEmailFinal,
+                    finalInterviewDate,
+                    timeRange,
+                    candidateJrsFinal
+                );
 
-            System.out.println("Interview notifications sent successfully");
-        } catch (Exception e) {
-            System.err.println("Failed to send interview notifications: " + e.getMessage());
-            // Don't throw exception - interview is already created
-        }
+                System.out.println("Interview notifications sent successfully");
+            } catch (Exception e) {
+                System.err.println("Failed to send interview notifications: " + e.getMessage());
+                // Don't throw exception - interview is already created
+            }
+        }).start();
 
         // Prepare response
         Map<String, Object> result = new HashMap<>();
@@ -1068,9 +1076,8 @@ public class HRService {
         result.put("interviewDate", savedInterview.getInterviewDate());
         result.put("interviewTimeFrom", savedInterview.getInterviewTimeFrom());
         result.put("interviewTimeTo", savedInterview.getInterviewTimeTo());
-        result.put("position", savedInterview.getPosition());
+        result.put("jrs", savedInterview.getJrs());
         result.put("status", savedInterview.getStatus());
-        result.put("notes", savedInterview.getNotes());
 
         return result;
     }

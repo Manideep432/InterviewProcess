@@ -52,7 +52,7 @@ public class InterviewService {
     public Interview scheduleInterview(Long hrId, Long panelistId, Long candidateId,
                                       String candidateName, String candidateEmail,
                                       LocalDate interviewDate, LocalTime interviewTimeFrom, LocalTime interviewTimeTo,
-                                      String position, String notes) {
+                                      String jrs) {
         Interview interview = new Interview(
             hrId,
             panelistId,
@@ -62,8 +62,7 @@ public class InterviewService {
             interviewDate,
             interviewTimeFrom,
             interviewTimeTo,
-            position,
-            notes
+            jrs
         );
         return interviewRepository.save(interview);
     }
@@ -74,7 +73,7 @@ public class InterviewService {
     @Transactional(timeout = 30)
     public Interview scheduleInterview(Long panelistId, String candidateName, String candidateEmail,
                                       LocalDate interviewDate, LocalTime interviewTimeFrom, LocalTime interviewTimeTo,
-                                      String position, String notes) {
+                                      String jrs) {
         // Use default values for hrId and candidateId for backward compatibility
         Interview interview = new Interview(
             1L, // Default HR ID
@@ -85,8 +84,7 @@ public class InterviewService {
             interviewDate,
             interviewTimeFrom,
             interviewTimeTo,
-            position,
-            notes
+            jrs
         );
         return interviewRepository.save(interview);
     }
@@ -132,7 +130,7 @@ public class InterviewService {
     @Transactional(timeout = 30)
     public Interview updateInterview(Long interviewId, String candidateName, String candidateEmail,
                                     LocalDate interviewDate, LocalTime interviewTimeFrom, LocalTime interviewTimeTo,
-                                    String position, String notes) {
+                                    String jrs) {
         Interview interview = interviewRepository.findById(interviewId)
             .orElseThrow(() -> new RuntimeException("Interview not found with id: " + interviewId));
         
@@ -141,8 +139,7 @@ public class InterviewService {
         if (interviewDate != null) interview.setInterviewDate(interviewDate);
         if (interviewTimeFrom != null) interview.setInterviewTimeFrom(interviewTimeFrom);
         if (interviewTimeTo != null) interview.setInterviewTimeTo(interviewTimeTo);
-        if (position != null) interview.setPosition(position);
-        if (notes != null) interview.setNotes(notes);
+        if (jrs != null) interview.setJrs(jrs);
         
         return interviewRepository.save(interview);
     }
@@ -268,12 +265,11 @@ public class InterviewService {
             
             // Set interview details
             dto.setInterviewId(interview.getId());
-            dto.setPosition(interview.getPosition());
+            dto.setJrs(interview.getJrs());
             dto.setInterviewDate(interview.getInterviewDate());
             dto.setInterviewTimeFrom(interview.getInterviewTimeFrom());
             dto.setInterviewTimeTo(interview.getInterviewTimeTo());
             dto.setStatus(interview.getStatus().toString());
-            dto.setNotes(interview.getNotes());
             dto.setFeedback(interview.getFeedback());
             dto.setMeetingLink(interview.getMeetingLink());
             dto.setMeetingRoomId(interview.getMeetingRoomId());
@@ -325,12 +321,11 @@ public class InterviewService {
             
             // Set interview details
             dto.setInterviewId(interview.getId());
-            dto.setPosition(interview.getPosition());
+            dto.setJrs(interview.getJrs());
             dto.setInterviewDate(interview.getInterviewDate());
             dto.setInterviewTimeFrom(interview.getInterviewTimeFrom());
             dto.setInterviewTimeTo(interview.getInterviewTimeTo());
             dto.setStatus(interview.getStatus().toString());
-            dto.setNotes(interview.getNotes());
             dto.setFeedback(interview.getFeedback());
             dto.setMeetingLink(interview.getMeetingLink());
             dto.setMeetingRoomId(interview.getMeetingRoomId());

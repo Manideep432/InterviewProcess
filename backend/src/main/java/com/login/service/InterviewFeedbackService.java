@@ -128,7 +128,7 @@ public class InterviewFeedbackService {
                 hrUser.getEmail(),
                 feedback.getCandidateName(),
                 panelistUser.getUsername(),
-                interview.getPosition(),
+                interview.getJrs(),
                 feedback.getTechPanelRecommendation(),
                 pdfContent
             );
@@ -223,7 +223,7 @@ public class InterviewFeedbackService {
             hrUser.getEmail(),
             feedback.getCandidateName(),
             panelistUser.getUsername(),
-            interview.getPosition(),
+            interview.getJrs(),
             feedback.getTechPanelRecommendation(),
             pdfContent
         );

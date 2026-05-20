@@ -39,12 +39,11 @@ public class InterviewController {
             LocalDate interviewDate = LocalDate.parse((String) request.get("interviewDate"));
             LocalTime interviewTimeFrom = LocalTime.parse((String) request.get("interviewTimeFrom"));
             LocalTime interviewTimeTo = LocalTime.parse((String) request.get("interviewTimeTo"));
-            String position = (String) request.get("position");
-            String notes = (String) request.get("notes");
+            String jrs = (String) request.get("jrs");
 
             Interview interview = interviewService.scheduleInterview(
                 panelistId, candidateName, candidateEmail,
-                interviewDate, interviewTimeFrom, interviewTimeTo, position, notes
+                interviewDate, interviewTimeFrom, interviewTimeTo, jrs
             );
 
             return ResponseEntity.ok(Map.of(
@@ -187,12 +186,11 @@ public class InterviewController {
                 LocalTime.parse((String) request.get("interviewTimeFrom")) : null;
             LocalTime interviewTimeTo = request.get("interviewTimeTo") != null ?
                 LocalTime.parse((String) request.get("interviewTimeTo")) : null;
-            String position = (String) request.get("position");
-            String notes = (String) request.get("notes");
+            String jrs = (String) request.get("jrs");
 
             Interview updated = interviewService.updateInterview(
                 id, candidateName, candidateEmail,
-                interviewDate, interviewTimeFrom, interviewTimeTo, position, notes
+                interviewDate, interviewTimeFrom, interviewTimeTo, jrs
             );
 
             return ResponseEntity.ok(Map.of(

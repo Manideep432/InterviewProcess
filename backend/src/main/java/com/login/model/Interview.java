@@ -51,11 +51,8 @@ public class Interview {
     @Column
     private Boolean hasTechnicalFeedback = false;
 
-    @Column(nullable = false)
-    private String position;
-
-    @Column(length = 1000)
-    private String notes;
+    @Column(nullable = true)
+    private String jrs = ""; // Default empty string to avoid null constraint issues
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -110,7 +107,7 @@ public class Interview {
     }
 
     public Interview(Long hrId, Long panelistId, Long candidateId, String candidateName, String candidateEmail,
-                    LocalDate interviewDate, LocalTime interviewTimeFrom, LocalTime interviewTimeTo, String position, String notes) {
+                    LocalDate interviewDate, LocalTime interviewTimeFrom, LocalTime interviewTimeTo, String jrs) {
         this.hrId = hrId;
         this.panelistId = panelistId;
         this.candidateId = candidateId;
@@ -119,8 +116,7 @@ public class Interview {
         this.interviewDate = interviewDate;
         this.interviewTimeFrom = interviewTimeFrom;
         this.interviewTimeTo = interviewTimeTo;
-        this.position = position;
-        this.notes = notes;
+        this.jrs = jrs;
         this.status = InterviewStatus.SCHEDULED;
     }
 
@@ -205,20 +201,12 @@ public class Interview {
         this.feedback = feedback;
     }
 
-    public String getPosition() {
-        return position;
+    public String getJrs() {
+        return jrs;
     }
 
-    public void setPosition(String position) {
-        this.position = position;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
+    public void setJrs(String jrs) {
+        this.jrs = jrs;
     }
 
     public InterviewStatus getStatus() {
