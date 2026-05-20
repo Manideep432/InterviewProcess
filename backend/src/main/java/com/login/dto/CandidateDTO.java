@@ -27,6 +27,8 @@ public class CandidateDTO {
     private BigDecimal oldCtc;
     private BigDecimal newCtc;
     private String employmentType;
+    private String jrs;
+    private String candidateType;
     private String location;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -87,6 +89,8 @@ public class CandidateDTO {
         this.oldCtc = candidate.getOldCtc();
         this.newCtc = candidate.getNewCtc();
         this.employmentType = candidate.getEmploymentType();
+        this.jrs = candidate.getJrs();
+        this.candidateType = candidate.getCandidateType();
         this.location = candidate.getLocation();
         this.createdAt = candidate.getCreatedAt();
         this.updatedAt = candidate.getUpdatedAt();
@@ -208,6 +212,22 @@ public class CandidateDTO {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public String getJrs() {
+        return jrs;
+    }
+
+    public void setJrs(String jrs) {
+        this.jrs = jrs;
+    }
+
+    public String getCandidateType() {
+        return candidateType;
+    }
+
+    public void setCandidateType(String candidateType) {
+        this.candidateType = candidateType;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -3,7 +3,9 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import Dashboard from './components/Dashboard';
+import ErrorBoundary from './components/ErrorBoundary';
 import authService from './services/authService';
+import { checkBackendHealth } from './utils/apiHelper';
 import './App.css';
 
 /**
@@ -13,8 +15,13 @@ function App() {
   const [currentView, setCurrentView] = useState('login');
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking'); // checking, online, offline
+  const [showBackendError, setShowBackendError] = useState(false);
 
   useEffect(() => {
+    // Check backend health on mount
+    checkBackend();
+    
     // Check if user is already logged in
     const currentUser = authService.getCurrentUser();
     if (currentUser) {
@@ -22,6 +29,29 @@ function App() {
       setIsAuthenticated(true);
     }
   }, []);
+
+  const checkBackend = async () => {
+    setBackendStatus('checking');
+    const isHealthy = await checkBackendHealth();
+    
+    if (isHealthy) {
+      setBackendStatus('online');
+      setShowBackendError(false);
+    } else {
+      setBackendStatus('offline');
+      setShowBackendError(true);
+      
+      // Auto-retry after 5 seconds
+      setTimeout(() => {
+        checkBackend();
+      }, 5000);
+    }
+  };
+
+  const handleRetryBackend = () => {
+    setShowBackendError(false);
+    checkBackend();
+  };
 
   const handleLoginSuccess = (response) => {
     setUser({
@@ -57,28 +87,49 @@ function App() {
   };
 
   if (isAuthenticated && user) {
-    return <Dashboard user={user} onLogout={handleLogout} />;
+    return (
+      <ErrorBoundary>
+        <Dashboard user={user} onLogout={handleLogout} />
+      </ErrorBoundary>
+    );
   }
 
   return (
-    <div className="App">
-      {currentView === 'login' ? (
-        <Login
-          onLoginSuccess={handleLoginSuccess}
-          onSwitchToRegister={switchToRegister}
-          onSwitchToForgotPassword={switchToForgotPassword}
-        />
-      ) : currentView === 'register' ? (
-        <Register
-          onRegisterSuccess={handleRegisterSuccess}
-          onSwitchToLogin={switchToLogin}
-        />
-      ) : (
-        <ForgotPassword
-          onSwitchToLogin={switchToLogin}
-        />
-      )}
-    </div>
+    <ErrorBoundary>
+      <div className="App">
+        {/* Backend Status Banner */}
+        {showBackendError && backendStatus === 'offline' && (
+          <div className="backend-error-banner">
+            <div className="backend-error-content">
+              <span className="error-icon">⚠️</span>
+              <span className="error-text">
+                Backend server is not responding. Please ensure it's running on http://localhost:8081
+              </span>
+              <button className="retry-backend-btn" onClick={handleRetryBackend}>
+                🔄 Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {currentView === 'login' ? (
+          <Login
+            onLoginSuccess={handleLoginSuccess}
+            onSwitchToRegister={switchToRegister}
+            onSwitchToForgotPassword={switchToForgotPassword}
+          />
+        ) : currentView === 'register' ? (
+          <Register
+            onRegisterSuccess={handleRegisterSuccess}
+            onSwitchToLogin={switchToLogin}
+          />
+        ) : (
+          <ForgotPassword
+            onSwitchToLogin={switchToLogin}
+          />
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
 

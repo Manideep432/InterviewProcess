@@ -223,6 +223,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord1.setEmail("john.doe@example.com");
             candidateRecord1.setPhone("+91-9876543210");
             candidateRecord1.setPosition("Senior Java Developer");
+            candidateRecord1.setJrs("JR-2024-001");
+            candidateRecord1.setCandidateType("EXTERNAL");
             candidateRecord1.setExperienceYears(6);
             candidateRecord1.setSkills("Java, Spring Boot, Microservices, Docker, Kubernetes");
             candidateRecord1.setStatus("INTERVIEW");
@@ -246,6 +248,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord2.setEmail("jane.smith@example.com");
             candidateRecord2.setPhone("+91-9876543211");
             candidateRecord2.setPosition("React Developer");
+            candidateRecord2.setJrs("JR-2024-002");
+            candidateRecord2.setCandidateType("REFERRAL");
             candidateRecord2.setExperienceYears(3);
             candidateRecord2.setSkills("React, Redux, JavaScript, TypeScript, CSS, HTML5");
             candidateRecord2.setStatus("SCREENING");
@@ -269,6 +273,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord3.setEmail("bob.johnson@example.com");
             candidateRecord3.setPhone("+91-9876543212");
             candidateRecord3.setPosition("Full Stack Developer");
+            candidateRecord3.setJrs("JR-2024-003");
+            candidateRecord3.setCandidateType("EXTERNAL");
             candidateRecord3.setExperienceYears(5);
             candidateRecord3.setSkills("Java, Spring, React, PostgreSQL, MongoDB, REST APIs");
             candidateRecord3.setStatus("SELECTED");
@@ -292,6 +298,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord4.setEmail("alice.williams@example.com");
             candidateRecord4.setPhone("+91-9876543213");
             candidateRecord4.setPosition("DevOps Engineer");
+            candidateRecord4.setJrs("JR-2024-004");
+            candidateRecord4.setCandidateType("AGENCY");
             candidateRecord4.setExperienceYears(4);
             candidateRecord4.setSkills("AWS, Docker, Kubernetes, Jenkins, Terraform, CI/CD");
             candidateRecord4.setStatus("APPLIED");
@@ -314,6 +322,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord5.setEmail("michael.brown@example.com");
             candidateRecord5.setPhone("+91-9876543214");
             candidateRecord5.setPosition("Python Developer");
+            candidateRecord5.setJrs("JR-2024-005");
+            candidateRecord5.setCandidateType("INTERNAL");
             candidateRecord5.setExperienceYears(3);
             candidateRecord5.setSkills("Python, Django, Flask, PostgreSQL, REST APIs, Machine Learning");
             candidateRecord5.setStatus("SCREENING");
@@ -338,6 +348,8 @@ public class DataInitializer implements CommandLineRunner {
             candidateRecord6.setEmail("sarah.davis@example.com");
             candidateRecord6.setPhone("+91-9876543215");
             candidateRecord6.setPosition("UI/UX Designer");
+            candidateRecord6.setJrs("JR-2024-006");
+            candidateRecord6.setCandidateType("REFERRAL");
             candidateRecord6.setExperienceYears(4);
             candidateRecord6.setSkills("Figma, Adobe XD, Sketch, User Research, Prototyping");
             candidateRecord6.setStatus("INTERVIEW");

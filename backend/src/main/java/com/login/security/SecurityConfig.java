@@ -42,7 +42,7 @@ public class SecurityConfig {
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/h2-console/**").permitAll()
+                .requestMatchers("/api/auth/**", "/h2-console/**", "/api/health/**", "/actuator/health/**").permitAll()
                 .requestMatchers("/api/hr/**").hasAnyAuthority("ROLE_HR", "HR")
                 // HR can create and manage panelists
                 .requestMatchers("/api/panelists/create", "/api/panelists/all", "/api/panelists/*/toggle-status", "/api/panelists/*/", "/api/panelists/hr/**").hasAnyAuthority("ROLE_HR", "HR")
