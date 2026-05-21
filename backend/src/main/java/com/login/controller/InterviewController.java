@@ -4,6 +4,7 @@ import com.login.dto.CandidateInterviewDTO;
 import com.login.model.Interview;
 import com.login.model.Interview.InterviewStatus;
 import com.login.service.InterviewService;
+import com.login.service.InterviewSchedulerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ public class InterviewController {
     @Autowired
     private InterviewService interviewService;
 
+    @Autowired
+    private InterviewSchedulerService interviewSchedulerService;
+
     /**
      * Schedule a new interview
      */
@@ -39,12 +43,11 @@ public class InterviewController {
             LocalDate interviewDate = LocalDate.parse((String) request.get("interviewDate"));
             LocalTime interviewTimeFrom = LocalTime.parse((String) request.get("interviewTimeFrom"));
             LocalTime interviewTimeTo = LocalTime.parse((String) request.get("interviewTimeTo"));
-            String position = (String) request.get("position");
-            String notes = (String) request.get("notes");
+            String jrs = (String) request.get("jrs");
 
             Interview interview = interviewService.scheduleInterview(
                 panelistId, candidateName, candidateEmail,
-                interviewDate, interviewTimeFrom, interviewTimeTo, position, notes
+                interviewDate, interviewTimeFrom, interviewTimeTo, jrs
             );
 
             return ResponseEntity.ok(Map.of(
@@ -187,12 +190,11 @@ public class InterviewController {
                 LocalTime.parse((String) request.get("interviewTimeFrom")) : null;
             LocalTime interviewTimeTo = request.get("interviewTimeTo") != null ?
                 LocalTime.parse((String) request.get("interviewTimeTo")) : null;
-            String position = (String) request.get("position");
-            String notes = (String) request.get("notes");
+            String jrs = (String) request.get("jrs");
 
             Interview updated = interviewService.updateInterview(
                 id, candidateName, candidateEmail,
-                interviewDate, interviewTimeFrom, interviewTimeTo, position, notes
+                interviewDate, interviewTimeFrom, interviewTimeTo, jrs
             );
 
             return ResponseEntity.ok(Map.of(
@@ -451,6 +453,27 @@ public class InterviewController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                 "success", false,
                 "message", "Failed to fetch interviews: " + e.getMessage()
+            ));
+        }
+    }
+    
+    /**
+     * Manually trigger update of expired interviews
+     * Checks all SCHEDULED interviews and marks them as COMPLETED if their end time has passed
+     */
+    @PostMapping("/update-expired")
+    public ResponseEntity<?> updateExpiredInterviews() {
+        try {
+            int updatedCount = interviewSchedulerService.updateExpiredInterviews();
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Interview statuses updated successfully",
+                "updatedCount", updatedCount
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", "Failed to update interview statuses: " + e.getMessage()
             ));
         }
     }

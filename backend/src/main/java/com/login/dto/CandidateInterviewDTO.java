@@ -12,12 +12,11 @@ import java.time.LocalTime;
 public class CandidateInterviewDTO {
     
     private Long interviewId;
-    private String position;
+    private String jrs;
     private LocalDate interviewDate;
     private LocalTime interviewTimeFrom;
     private LocalTime interviewTimeTo;
     private String status;
-    private String notes;
     private String feedback;
     
     // HR Details
@@ -40,19 +39,18 @@ public class CandidateInterviewDTO {
     public CandidateInterviewDTO() {
     }
     
-    public CandidateInterviewDTO(Long interviewId, String position, LocalDate interviewDate,
+    public CandidateInterviewDTO(Long interviewId, String jrs, LocalDate interviewDate,
                                 LocalTime interviewTimeFrom, LocalTime interviewTimeTo,
-                                String status, String notes, String feedback,
+                                String status, String feedback,
                                 Long hrId, String hrName, String hrEmail, String hrPhone, String hrDesignation,
                                 Long panelistId, String panelistName, String panelistEmail,
                                 String meetingLink, String meetingRoomId) {
         this.interviewId = interviewId;
-        this.position = position;
+        this.jrs = jrs;
         this.interviewDate = interviewDate;
         this.interviewTimeFrom = interviewTimeFrom;
         this.interviewTimeTo = interviewTimeTo;
         this.status = status;
-        this.notes = notes;
         this.feedback = feedback;
         this.hrId = hrId;
         this.hrName = hrName;
@@ -75,12 +73,12 @@ public class CandidateInterviewDTO {
         this.interviewId = interviewId;
     }
     
-    public String getPosition() {
-        return position;
+    public String getJrs() {
+        return jrs;
     }
     
-    public void setPosition(String position) {
-        this.position = position;
+    public void setJrs(String jrs) {
+        this.jrs = jrs;
     }
     
     public LocalDate getInterviewDate() {
@@ -113,14 +111,6 @@ public class CandidateInterviewDTO {
     
     public void setStatus(String status) {
         this.status = status;
-    }
-    
-    public String getNotes() {
-        return notes;
-    }
-    
-    public void setNotes(String notes) {
-        this.notes = notes;
     }
     
     public String getFeedback() {

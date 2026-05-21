@@ -435,8 +435,7 @@ public class DataInitializer implements CommandLineRunner {
             interview1.setInterviewDate(LocalDate.now().plusDays(1));
             interview1.setInterviewTimeFrom(LocalTime.of(10, 0));
             interview1.setInterviewTimeTo(LocalTime.of(11, 30));
-            interview1.setPosition("Senior Java Developer");
-            interview1.setNotes("Technical round focusing on Spring Boot, Microservices, and system design. Please prepare code samples.");
+            interview1.setJrs("Senior Java Developer");
             interview1.setStatus(Interview.InterviewStatus.SCHEDULED);
             interview1.setMeetingLink("https://meet.google.com/abc-defg-hij");
             interview1.setMeetingRoomId("ROOM-001");
@@ -453,8 +452,7 @@ public class DataInitializer implements CommandLineRunner {
             interview2.setInterviewDate(LocalDate.now().plusDays(2));
             interview2.setInterviewTimeFrom(LocalTime.of(14, 0));
             interview2.setInterviewTimeTo(LocalTime.of(15, 30));
-            interview2.setPosition("React Developer");
-            interview2.setNotes("Frontend technical assessment. Focus on React, Redux, and component architecture. Live coding session included.");
+            interview2.setJrs("React Developer");
             interview2.setStatus(Interview.InterviewStatus.SCHEDULED);
             interview2.setMeetingLink("https://meet.google.com/xyz-uvwx-rst");
             interview2.setMeetingRoomId("ROOM-002");
@@ -471,8 +469,7 @@ public class DataInitializer implements CommandLineRunner {
             interview3.setInterviewDate(LocalDate.now().minusDays(3));
             interview3.setInterviewTimeFrom(LocalTime.of(11, 0));
             interview3.setInterviewTimeTo(LocalTime.of(12, 30));
-            interview3.setPosition("Full Stack Developer");
-            interview3.setNotes("Full stack assessment covering both frontend and backend technologies.");
+            interview3.setJrs("Full Stack Developer");
             interview3.setStatus(Interview.InterviewStatus.COMPLETED);
             interview3.setFeedback("Excellent performance! Strong technical skills in both Java and React. Good problem-solving approach. Recommended for hire.");
             interview3.setMeetingLink("https://meet.google.com/completed-001");
@@ -490,8 +487,7 @@ public class DataInitializer implements CommandLineRunner {
             interview4.setInterviewDate(LocalDate.now().plusDays(7));
             interview4.setInterviewTimeFrom(LocalTime.of(15, 30));
             interview4.setInterviewTimeTo(LocalTime.of(17, 0));
-            interview4.setPosition("UI/UX Designer");
-            interview4.setNotes("Portfolio review and design thinking assessment. Please bring your best work samples and be ready to discuss your design process.");
+            interview4.setJrs("UI/UX Designer");
             interview4.setStatus(Interview.InterviewStatus.SCHEDULED);
             interview4.setMeetingLink("https://meet.google.com/design-review-001");
             interview4.setMeetingRoomId("ROOM-004");
@@ -508,8 +504,7 @@ public class DataInitializer implements CommandLineRunner {
             interview5.setInterviewDate(LocalDate.now().plusDays(3));
             interview5.setInterviewTimeFrom(LocalTime.of(9, 30));
             interview5.setInterviewTimeTo(LocalTime.of(11, 0));
-            interview5.setPosition("Python Developer");
-            interview5.setNotes("Python technical round. Focus on Django/Flask frameworks, REST API design, and database optimization.");
+            interview5.setJrs("Python Developer");
             interview5.setStatus(Interview.InterviewStatus.SCHEDULED);
             interview5.setMeetingLink("https://meet.google.com/python-tech-001");
             interview5.setMeetingRoomId("ROOM-005");
@@ -526,8 +521,7 @@ public class DataInitializer implements CommandLineRunner {
             interview6.setInterviewDate(LocalDate.now().plusDays(5));
             interview6.setInterviewTimeFrom(LocalTime.of(16, 0));
             interview6.setInterviewTimeTo(LocalTime.of(17, 0));
-            interview6.setPosition("Senior Java Developer");
-            interview6.setNotes("System design and architecture discussion. Cloud deployment strategies.");
+            interview6.setJrs("Senior Java Developer");
             interview6.setStatus(Interview.InterviewStatus.RESCHEDULED);
             interview6.setMeetingLink("https://meet.google.com/system-design-001");
             interview6.setMeetingRoomId("ROOM-006");

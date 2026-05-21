@@ -9,10 +9,20 @@ import './HRDashboard.css';
 const HRDashboard = ({ user, onLogout }) => {
   const [activeTab, setActiveTab] = useState('home');
   const [dashboardData, setDashboardData] = useState(null);
+  const [enhancedStats, setEnhancedStats] = useState(null);
   const [myCandidates, setMyCandidates] = useState([]);
+  const [filteredCandidates, setFilteredCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  const [selectedGraphFilter, setSelectedGraphFilter] = useState(null);
+  
+  // Search and Filter state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [positionFilter, setPositionFilter] = useState('');
+  const [locationFilter, setLocationFilter] = useState('');
+  const [searching, setSearching] = useState(false);
   
   // Edit candidate state
   const [editingCandidate, setEditingCandidate] = useState(null);
@@ -107,6 +117,7 @@ const HRDashboard = ({ user, onLogout }) => {
   const [filteredInterviews, setFilteredInterviews] = useState([]);
   const [interviewStatusFilter, setInterviewStatusFilter] = useState('ALL');
   const [loadingInterviews, setLoadingInterviews] = useState(false);
+  const [lastInterviewUpdate, setLastInterviewUpdate] = useState(null);
 
   // Candidate Feedback state
   const [allFeedbacks, setAllFeedbacks] = useState([]);
@@ -145,9 +156,11 @@ const HRDashboard = ({ user, onLogout }) => {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchEnhancedStats();
     fetchMyCandidates();
     fetchMyPanelists();
     fetchHRProfile();
+    fetchAllInterviews(); // Fetch interviews for home tab statistics
   }, []);
   
   useEffect(() => {
@@ -156,6 +169,26 @@ const HRDashboard = ({ user, onLogout }) => {
     } else if (activeTab === 'candidateFeedback') {
       fetchAllFeedbacks();
     }
+  }, [activeTab]);
+  
+  // Auto-refresh interviews every 60 seconds when on interviews tab
+  useEffect(() => {
+    let intervalId;
+    
+    if (activeTab === 'interviews') {
+      // Set up interval to refresh interviews every 60 seconds
+      intervalId = setInterval(() => {
+        console.log('Auto-refreshing interviews...');
+        fetchAllInterviews();
+      }, 60000); // 60 seconds
+    }
+    
+    // Cleanup interval on unmount or when tab changes
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, [activeTab]);
   
   useEffect(() => {
@@ -275,6 +308,63 @@ const HRDashboard = ({ user, onLogout }) => {
     }
   };
 
+  const fetchEnhancedStats = async () => {
+    try {
+      console.log('Fetching enhanced dashboard statistics...');
+      
+      const result = await apiGet(`/api/hr/${user.id}/enhanced-stats`);
+      
+      if (result.ok && result.data.success) {
+        setEnhancedStats(result.data.stats);
+        console.log('Enhanced stats loaded successfully');
+      } else {
+        console.warn('Failed to fetch enhanced stats');
+      }
+    } catch (err) {
+      console.error('Error fetching enhanced stats:', err);
+    }
+  };
+
+  // Handle graph bar click for filtering
+  const handleGraphBarClick = (filterType, filterValue) => {
+    console.log('Graph bar clicked:', filterType, filterValue);
+    
+    if (filterType === 'candidateStatus') {
+      // Filter candidates by status
+      setStatusFilter(filterValue);
+      setSelectedGraphFilter({ type: 'candidateStatus', value: filterValue });
+      
+      // Switch to manage candidates tab to show filtered results
+      setActiveTab('manageCandidates');
+    } else if (filterType === 'panelistExperience') {
+      // Filter panelists by experience range
+      setSelectedGraphFilter({ type: 'panelistExperience', value: filterValue });
+      
+      // Switch to manage panelists tab
+      setActiveTab('managePanelists');
+    }
+  };
+
+  // Clear graph filter
+  const clearGraphFilter = () => {
+    setSelectedGraphFilter(null);
+    setStatusFilter('ALL');
+  };
+
+  // Get trend icon based on trend direction
+  const getTrendIcon = (trend) => {
+    if (trend === 'UP') return '↑';
+    if (trend === 'DOWN') return '↓';
+    return '→';
+  };
+
+  // Get trend color class
+  const getTrendClass = (trend) => {
+    if (trend === 'UP') return 'trend-up';
+    if (trend === 'DOWN') return 'trend-down';
+    return 'trend-stable';
+  };
+
   const fetchMyCandidates = async () => {
     try {
       console.log('Fetching my candidates...');
@@ -357,6 +447,79 @@ const HRDashboard = ({ user, onLogout }) => {
     }
   };
 
+  // Search and Filter Functions
+  const handleSearch = async () => {
+    if (!searchTerm && statusFilter === 'ALL' && !positionFilter && !locationFilter) {
+      // No filters applied, show all candidates
+      setFilteredCandidates(myCandidates);
+      return;
+    }
+
+    try {
+      setSearching(true);
+      console.log('Searching candidates with filters:', {
+        searchTerm,
+        statusFilter,
+        positionFilter,
+        locationFilter
+      });
+
+      const params = new URLSearchParams();
+      if (searchTerm) params.append('searchTerm', searchTerm);
+      if (statusFilter && statusFilter !== 'ALL') params.append('status', statusFilter);
+      if (positionFilter) params.append('position', positionFilter);
+      if (locationFilter) params.append('location', locationFilter);
+
+      const result = await apiGet(`/api/candidates/advanced-search/hr/${user.id}?${params.toString()}`);
+
+      if (result.ok && result.data.success) {
+        console.log('Search results:', result.data.candidates);
+        setFilteredCandidates(result.data.candidates || []);
+      } else {
+        console.error('Search failed:', result.data.message);
+        setFilteredCandidates([]);
+      }
+    } catch (err) {
+      console.error('Error searching candidates:', err);
+      setFilteredCandidates(myCandidates);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleClearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('ALL');
+    setPositionFilter('');
+    setLocationFilter('');
+    setFilteredCandidates(myCandidates);
+  };
+
+  const handleQuickJump = (candidateId) => {
+    const element = document.getElementById(`candidate-row-${candidateId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.classList.add('highlight-row');
+      setTimeout(() => {
+        element.classList.remove('highlight-row');
+      }, 2000);
+    }
+  };
+
+  // Update filtered candidates when myCandidates changes
+  useEffect(() => {
+    setFilteredCandidates(myCandidates);
+  }, [myCandidates]);
+
+  // Trigger search when filters change
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      handleSearch();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchTerm, statusFilter, positionFilter, locationFilter]);
+
   const fetchAllInterviews = async () => {
     try {
       setLoadingInterviews(true);
@@ -369,6 +532,7 @@ const HRDashboard = ({ user, onLogout }) => {
       if (result.ok && result.data.success) {
         console.log('All interviews received:', result.data);
         setAllInterviews(result.data.interviews || []);
+        setLastInterviewUpdate(new Date());
       } else {
         setError(result.data.message || 'Failed to fetch interviews');
       }
@@ -378,6 +542,11 @@ const HRDashboard = ({ user, onLogout }) => {
     } finally {
       setLoadingInterviews(false);
     }
+  };
+  
+  const handleManualRefreshInterviews = async () => {
+    console.log('Manual refresh triggered');
+    await fetchAllInterviews();
   };
 
   const handleLogout = () => {
@@ -991,10 +1160,10 @@ const HRDashboard = ({ user, onLogout }) => {
 
       if (result.ok && result.data.success) {
         setProfileSuccess('Profile saved successfully!');
-        setHrProfile(data.profile);
+        setHrProfile(result.data.profile);
         setTimeout(() => setProfileSuccess(''), 3000);
       } else {
-        throw new Error(data.message || 'Failed to save profile');
+        throw new Error(result.data.message || 'Failed to save profile');
       }
     } catch (err) {
       console.error('Error saving profile:', err);
@@ -1034,6 +1203,87 @@ const HRDashboard = ({ user, onLogout }) => {
 
     return candidate.status || latestInterview?.status || 'N/A';
   };
+
+  const candidateStatusConfig = [
+    { key: 'APPLIED', label: 'Applied', colorClass: 'bar-applied' },
+    { key: 'SCREENING', label: 'Screening', colorClass: 'bar-screening' },
+    { key: 'INTERVIEW', label: 'Interview', colorClass: 'bar-interview' },
+    { key: 'INTERVIEW_COMPLETED', label: 'Completed', colorClass: 'bar-completed' },
+    { key: 'SELECTED', label: 'Selected', colorClass: 'bar-selected' },
+    { key: 'REJECTED', label: 'Rejected', colorClass: 'bar-rejected' }
+  ];
+
+  const candidateStatusCounts = myCandidates.reduce((acc, candidate) => {
+    const status = getCandidateDisplayStatus(candidate);
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const candidateGraphData = candidateStatusConfig.map((status) => ({
+    ...status,
+    count: candidateStatusCounts[status.key] || 0
+  }));
+
+  const maxCandidateCount = Math.max(...candidateGraphData.map((item) => item.count), 1);
+
+  const panelistExperienceConfig = [
+    { key: '0-2', label: '0-2 Yrs', min: 0, max: 2, colorClass: 'bar-junior' },
+    { key: '3-5', label: '3-5 Yrs', min: 3, max: 5, colorClass: 'bar-mid' },
+    { key: '6-9', label: '6-9 Yrs', min: 6, max: 9, colorClass: 'bar-senior' },
+    { key: '10+', label: '10+ Yrs', min: 10, max: Infinity, colorClass: 'bar-lead' }
+  ];
+
+  const panelistGraphData = panelistExperienceConfig.map((range) => {
+    const count = myPanelists.filter((panelist) => {
+      const experience = Number(panelist.experienceYears || 0);
+      return experience >= range.min && experience <= range.max;
+    }).length;
+
+    return {
+      ...range,
+      count
+    };
+  });
+
+  const maxPanelistCount = Math.max(...panelistGraphData.map((item) => item.count), 1);
+
+  // Calculate interview statistics for home tab
+  const totalInterviews = allInterviews.length;
+  const scheduledInterviews = allInterviews.filter(interview =>
+    interview.status === 'SCHEDULED'
+  ).length;
+  const completedInterviews = allInterviews.filter(interview =>
+    interview.status === 'COMPLETED'
+  ).length;
+  
+  // Calculate success rate (interviews with positive feedback)
+  const successRate = completedInterviews > 0
+    ? Math.round((allFeedbacks.filter(f => f.overallRecommendation === 'STRONG_YES' || f.overallRecommendation === 'YES').length / completedInterviews) * 100)
+    : 0;
+
+  // Active candidates (candidates with scheduled interviews)
+  const activeCandidates = new Set(
+    allInterviews
+      .filter(interview => interview.status === 'SCHEDULED')
+      .map(interview => interview.candidateEmail)
+  ).size;
+
+  // Feedback pending (completed interviews without feedback)
+  const feedbackPending = allInterviews.filter(interview => {
+    const hasFeedback = allFeedbacks.some(feedback =>
+      feedback.interviewId === interview.id
+    );
+    return interview.status === 'COMPLETED' && !hasFeedback;
+  }).length;
+
+  // This month's interviews
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const thisMonthInterviews = allInterviews.filter(interview => {
+    const interviewDate = new Date(interview.interviewDate);
+    return interviewDate.getMonth() === currentMonth &&
+           interviewDate.getFullYear() === currentYear;
+  }).length;
 
   return (
     <div className="hr-dashboard-container">
@@ -1150,6 +1400,218 @@ const HRDashboard = ({ user, onLogout }) => {
                         {myPanelists.length}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Total Interviews Card */}
+                  <div className="dashboard-stat-card interviews-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">📅</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">TOTAL INTERVIEWS</h3>
+                      <p className="stat-value">
+                        {totalInterviews}
+                      </p>
+                      <p className="stat-subtitle">Scheduled + Completed</p>
+                    </div>
+                  </div>
+
+                  {/* Pending Interviews Card */}
+                  <div className="dashboard-stat-card pending-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">⏳</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">PENDING INTERVIEWS</h3>
+                      <p className="stat-value">
+                        {scheduledInterviews}
+                      </p>
+                      <p className="stat-subtitle">Scheduled Only</p>
+                    </div>
+                  </div>
+
+                  {/* Completed Interviews Card */}
+                  <div className="dashboard-stat-card completed-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">✅</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">COMPLETED INTERVIEWS</h3>
+                      <p className="stat-value">
+                        {completedInterviews}
+                      </p>
+                      <p className="stat-subtitle">Success Rate: {successRate}%</p>
+                    </div>
+                  </div>
+
+                  {/* Active Candidates Card */}
+                  <div className="dashboard-stat-card active-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">🔥</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">ACTIVE CANDIDATES</h3>
+                      <p className="stat-value">
+                        {activeCandidates}
+                      </p>
+                      <p className="stat-subtitle">With Upcoming Interviews</p>
+                    </div>
+                  </div>
+
+                  {/* Feedback Pending Card */}
+                  <div className="dashboard-stat-card feedback-pending-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">📝</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">FEEDBACK PENDING</h3>
+                      <p className="stat-value">
+                        {feedbackPending}
+                      </p>
+                      <p className="stat-subtitle">Awaiting Feedback</p>
+                    </div>
+                  </div>
+
+                  {/* This Month's Interviews Card */}
+                  <div className="dashboard-stat-card month-card">
+                    <div className="stat-icon">
+                      <span className="icon-emoji">📆</span>
+                    </div>
+                    <div className="stat-content">
+                      <h3 className="stat-title">THIS MONTH</h3>
+                      <p className="stat-value">
+                        {thisMonthInterviews}
+                      </p>
+                      <p className="stat-subtitle">Interviews This Month</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="home-graphs-grid">
+                  <div className="graph-card">
+                    <div className="graph-card-header">
+                      <div>
+                        <h3>📈 Candidates Graph</h3>
+                        <p>Status-wise distribution of your candidates (Click bars to filter)</p>
+                      </div>
+                      <span className="graph-total">Total: {myCandidates.length}</span>
+                    </div>
+
+                    <div className="graph-bars">
+                      {candidateGraphData.map((item) => {
+                        const percentage = myCandidates.length > 0
+                          ? Math.round((item.count / myCandidates.length) * 100)
+                          : 0;
+                        const statsData = enhancedStats?.candidateStatusStats?.[item.key];
+                        const trend = statsData?.trend || 'STABLE';
+                        const change = statsData?.change || 0;
+                        
+                        return (
+                          <div
+                            className="graph-bar-row interactive"
+                            key={item.key}
+                            onClick={() => handleGraphBarClick('candidateStatus', item.key)}
+                            title={`Click to filter by ${item.label}`}
+                          >
+                            <div className="graph-label-wrap">
+                              <span className="graph-label">{item.label}</span>
+                              <div className="graph-stats">
+                                <span className="graph-count">{item.count}</span>
+                                <span className="graph-percentage">({percentage}%)</span>
+                                {enhancedStats && (
+                                  <span className={`graph-trend ${getTrendClass(trend)}`}>
+                                    {getTrendIcon(trend)} {Math.abs(change)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="graph-track">
+                              <div
+                                className={`graph-fill ${item.colorClass}`}
+                                style={{ width: `${(item.count / maxCandidateCount) * 100}%` }}
+                              >
+                                <span className="graph-fill-label">{percentage}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {enhancedStats?.overallStats?.candidates && (
+                      <div className="graph-summary">
+                        <span className={`summary-trend ${getTrendClass(enhancedStats.overallStats.candidates.trend)}`}>
+                          {getTrendIcon(enhancedStats.overallStats.candidates.trend)}
+                          {Math.abs(enhancedStats.overallStats.candidates.change)} this month
+                        </span>
+                        <span className="summary-text">
+                          vs. previous month ({enhancedStats.overallStats.candidates.previousMonth})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="graph-card">
+                    <div className="graph-card-header">
+                      <div>
+                        <h3>📊 Panelists Graph</h3>
+                        <p>Experience-wise distribution of your panelists (Click bars to filter)</p>
+                      </div>
+                      <span className="graph-total">Total: {myPanelists.length}</span>
+                    </div>
+
+                    <div className="graph-bars">
+                      {panelistGraphData.map((item) => {
+                        const percentage = myPanelists.length > 0
+                          ? Math.round((item.count / myPanelists.length) * 100)
+                          : 0;
+                        const statsData = enhancedStats?.panelistExperienceStats?.[item.key];
+                        const trend = statsData?.trend || 'STABLE';
+                        const change = statsData?.change || 0;
+                        
+                        return (
+                          <div
+                            className="graph-bar-row interactive"
+                            key={item.key}
+                            onClick={() => handleGraphBarClick('panelistExperience', item.key)}
+                            title={`Click to filter by ${item.label}`}
+                          >
+                            <div className="graph-label-wrap">
+                              <span className="graph-label">{item.label}</span>
+                              <div className="graph-stats">
+                                <span className="graph-count">{item.count}</span>
+                                <span className="graph-percentage">({percentage}%)</span>
+                                {enhancedStats && (
+                                  <span className={`graph-trend ${getTrendClass(trend)}`}>
+                                    {getTrendIcon(trend)} {Math.abs(change)}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="graph-track">
+                              <div
+                                className={`graph-fill ${item.colorClass}`}
+                                style={{ width: `${(item.count / maxPanelistCount) * 100}%` }}
+                              >
+                                <span className="graph-fill-label">{percentage}%</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                    {enhancedStats?.overallStats?.panelists && (
+                      <div className="graph-summary">
+                        <span className={`summary-trend ${getTrendClass(enhancedStats.overallStats.panelists.trend)}`}>
+                          {getTrendIcon(enhancedStats.overallStats.panelists.trend)}
+                          {Math.abs(enhancedStats.overallStats.panelists.change)} this month
+                        </span>
+                        <span className="summary-text">
+                          vs. previous month ({enhancedStats.overallStats.panelists.previousMonth})
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2161,11 +2623,11 @@ const HRDashboard = ({ user, onLogout }) => {
                           </div>
 
                           <div className="form-group">
-                            <label htmlFor="position-display">Position</label>
+                            <label htmlFor="jrs-display">JRS</label>
                             <input
                               type="text"
-                              id="position-display"
-                              value={schedulingInterview.position}
+                              id="jrs-display"
+                              value={schedulingInterview.jrs || schedulingInterview.position}
                               disabled
                               style={{ backgroundColor: '#f8f9fa', cursor: 'not-allowed' }}
                             />
@@ -2258,7 +2720,101 @@ const HRDashboard = ({ user, onLogout }) => {
                   </div>
                 ) : (
                   <div className="candidates-list">
-                    {myCandidates && myCandidates.length > 0 ? (
+                    {/* Search and Filter Bar */}
+                    <div className="search-filter-container">
+                      <div className="search-filter-header">
+                        <h3>🔍 Search & Filter Candidates</h3>
+                        <button
+                          onClick={handleClearFilters}
+                          className="clear-filters-button"
+                          title="Clear all filters"
+                        >
+                          🔄 Clear Filters
+                        </button>
+                      </div>
+
+                      <div className="search-filter-grid">
+                        {/* Search Input */}
+                        <div className="search-box">
+                          <label htmlFor="search-input">
+                            <span className="search-icon">🔎</span> Search by Name or Email
+                          </label>
+                          <input
+                            id="search-input"
+                            type="text"
+                            placeholder="Type to search candidates..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="search-input"
+                          />
+                          {searching && <span className="searching-indicator">Searching...</span>}
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="filter-box">
+                          <label htmlFor="status-filter">
+                            <span className="filter-icon">📊</span> Status
+                          </label>
+                          <select
+                            id="status-filter"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="filter-select"
+                          >
+                            <option value="ALL">All Statuses</option>
+                            <option value="APPLIED">Applied</option>
+                            <option value="SCREENING">Screening</option>
+                            <option value="INTERVIEW">Interview</option>
+                            <option value="SELECTED">Selected</option>
+                            <option value="REJECTED">Rejected</option>
+                          </select>
+                        </div>
+
+                        {/* Position Filter */}
+                        <div className="filter-box">
+                          <label htmlFor="position-filter">
+                            <span className="filter-icon">💼</span> Position
+                          </label>
+                          <input
+                            id="position-filter"
+                            type="text"
+                            placeholder="Filter by position..."
+                            value={positionFilter}
+                            onChange={(e) => setPositionFilter(e.target.value)}
+                            className="filter-input"
+                          />
+                        </div>
+
+                        {/* Location Filter */}
+                        <div className="filter-box">
+                          <label htmlFor="location-filter">
+                            <span className="filter-icon">📍</span> Location
+                          </label>
+                          <input
+                            id="location-filter"
+                            type="text"
+                            placeholder="Filter by location..."
+                            value={locationFilter}
+                            onChange={(e) => setLocationFilter(e.target.value)}
+                            className="filter-input"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Results Summary */}
+                      <div className="search-results-summary">
+                        <span className="results-count">
+                          📋 Showing <strong>{filteredCandidates.length}</strong> of <strong>{myCandidates.length}</strong> candidates
+                        </span>
+                        {(searchTerm || statusFilter !== 'ALL' || positionFilter || locationFilter) && (
+                          <span className="active-filters-badge">
+                            🔍 Filters Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {filteredCandidates && filteredCandidates.length > 0 ? (
                       <div className="table-container">
                         <table className="candidate-table">
                           <thead>
@@ -2266,7 +2822,6 @@ const HRDashboard = ({ user, onLogout }) => {
                               <th>Name</th>
                               <th>Email</th>
                               <th>Phone</th>
-                              <th>Position</th>
                               <th>JRS</th>
                               <th>Candidate Type</th>
                               <th>Experience</th>
@@ -2277,16 +2832,15 @@ const HRDashboard = ({ user, onLogout }) => {
                             </tr>
                           </thead>
                           <tbody>
-                            {myCandidates.map((candidate) => {
+                            {filteredCandidates.map((candidate) => {
                               const interviews = candidateInterviews[candidate.email] || [];
                               const latestInterview = interviews.length > 0 ? interviews[0] : null;
                               
                               return (
-                              <tr key={candidate.id}>
+                              <tr key={candidate.id} id={`candidate-row-${candidate.id}`}>
                                 <td>{candidate.name}</td>
                                 <td>{candidate.email}</td>
                                 <td>{candidate.phone}</td>
-                                <td>{candidate.position}</td>
                                 <td>{candidate.jrs || 'N/A'}</td>
                                 <td>{candidate.candidateType || 'N/A'}</td>
                                 <td>{candidate.experienceYears ? `${candidate.experienceYears} years` : 'N/A'}</td>
@@ -2297,10 +2851,12 @@ const HRDashboard = ({ user, onLogout }) => {
                                       <span className={`interview-status-badge interview-${latestInterview.status?.toLowerCase()}`}>
                                         {latestInterview.status}
                                       </span>
-                                      <div className="interview-details">
-                                        <small>📅 {latestInterview.interviewDate}</small>
-                                        <small>🕐 {latestInterview.interviewTimeFrom} - {latestInterview.interviewTimeTo}</small>
-                                      </div>
+                                      {latestInterview.status !== 'COMPLETED' && (
+                                        <div className="interview-details">
+                                          <small>📅 {latestInterview.interviewDate}</small>
+                                          <small>🕐 {latestInterview.interviewTimeFrom} - {latestInterview.interviewTimeTo}</small>
+                                        </div>
+                                      )}
                                       {interviews.length > 1 && (
                                         <small className="interview-count">+{interviews.length - 1} more</small>
                                       )}
@@ -2329,7 +2885,7 @@ const HRDashboard = ({ user, onLogout }) => {
                                     {candidate.status}
                                   </span>
                                 </td>
-                                <td>
+                                <td className="action-buttons">
                                   <button
                                     onClick={() => handleEditCandidate(candidate)}
                                     className="edit-button"
@@ -2341,11 +2897,10 @@ const HRDashboard = ({ user, onLogout }) => {
                                     onClick={() => handleDeleteCandidate(candidate.id, candidate.name)}
                                     className="delete-button"
                                     title="Delete candidate"
-                                    style={{ marginLeft: '8px' }}
                                   >
-                                   🗑️ Delete
-                                 </button>
-                               </td>
+                                    🗑️ Delete
+                                  </button>
+                                </td>
                              </tr>
                            );
                            })}
@@ -2517,10 +3072,40 @@ const HRDashboard = ({ user, onLogout }) => {
             {/* Interviews Tab */}
             {activeTab === 'interviews' && (
               <div className="interviews-section">
-                <h2>📅 All Interviews</h2>
-                <p className="section-description">
-                  View and manage all scheduled interviews ({allInterviews.length} total)
-                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                  <div>
+                    <h2>📅 All Interviews</h2>
+                    <p className="section-description">
+                      View and manage all scheduled interviews ({allInterviews.length} total)
+                      {lastInterviewUpdate && (
+                        <span style={{ marginLeft: '1rem', fontSize: '0.85em', color: '#666' }}>
+                          Last updated: {lastInterviewUpdate.toLocaleTimeString('en-IN', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleManualRefreshInterviews}
+                    disabled={loadingInterviews}
+                    style={{
+                      padding: '0.5rem 1rem',
+                      backgroundColor: '#4CAF50',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '4px',
+                      cursor: loadingInterviews ? 'not-allowed' : 'pointer',
+                      fontSize: '0.9em',
+                      fontWeight: '500',
+                      opacity: loadingInterviews ? 0.6 : 1
+                    }}
+                  >
+                    {loadingInterviews ? '🔄 Refreshing...' : '🔄 Refresh Now'}
+                  </button>
+                </div>
 
                 {/* Status Filter Dropdown */}
                 <div className="filter-section">
@@ -2541,6 +3126,9 @@ const HRDashboard = ({ user, onLogout }) => {
                   <span className="filter-count">
                     Showing {filteredInterviews.length} of {allInterviews.length} interviews
                   </span>
+                  <span style={{ marginLeft: '1rem', fontSize: '0.85em', color: '#666', fontStyle: 'italic' }}>
+                    ⏱️ Auto-refreshes every 60 seconds
+                  </span>
                 </div>
 
                 {loadingInterviews ? (
@@ -2556,12 +3144,11 @@ const HRDashboard = ({ user, onLogout }) => {
                           <th>Interview ID</th>
                           <th>Candidate Name</th>
                           <th>Candidate Email</th>
-                          <th>Position</th>
+                          <th>JRS</th>
                           <th>Interview Date</th>
                           <th>Time From</th>
                           <th>Time To</th>
                           <th>Status</th>
-                          <th>Notes</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2570,7 +3157,7 @@ const HRDashboard = ({ user, onLogout }) => {
                             <td>{interview.id}</td>
                             <td>{interview.candidateName || 'N/A'}</td>
                             <td>{interview.candidateEmail || 'N/A'}</td>
-                            <td>{interview.position || 'N/A'}</td>
+                            <td>{interview.jrs || 'N/A'}</td>
                             <td>
                               {interview.interviewDate ?
                                 new Date(interview.interviewDate).toLocaleDateString('en-IN', {
@@ -2589,13 +3176,6 @@ const HRDashboard = ({ user, onLogout }) => {
                               <span className={`interview-status-badge interview-${interview.status?.toLowerCase()}`}>
                                 {interview.status || 'N/A'}
                               </span>
-                            </td>
-                            <td className="jd-cell" title={interview.notes}>
-                              {interview.notes ?
-                                (interview.notes.length > 50 ?
-                                  interview.notes.substring(0, 50) + '...' :
-                                  interview.notes) :
-                                'No notes'}
                             </td>
                           </tr>
                         ))}
@@ -2641,7 +3221,7 @@ const HRDashboard = ({ user, onLogout }) => {
                         <tr>
                           <th>Feedback ID</th>
                           <th>Candidate Name</th>
-                          <th>Position</th>
+                          <th>JRS</th>
                           <th>Evaluation Date</th>
                           <th>Overall Rating</th>
                           <th>Recommendation</th>

@@ -151,7 +151,10 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onSwitchToForgotPassword })
     <div className="login-container">
       <div className="login-card">
         <div className="login-header">
-          <h2>{otpSent ? '📧 Email Verification' : '🔐 Login'}</h2>
+          <div className="login-icon">
+            {otpSent ? '📧' : '🔐'}
+          </div>
+          <h2>{otpSent ? 'Email Verification' : 'Login'}</h2>
           <p>
             {otpSent
               ? `Enter the 6-digit OTP sent to ${maskedEmail}`
@@ -164,7 +167,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onSwitchToForgotPassword })
           <form onSubmit={handleSubmit} className="login-form">
             {error && (
               <div className="error-message">
-                ❌ {error}
+                {error}
               </div>
             )}
 
@@ -210,20 +213,20 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onSwitchToForgotPassword })
               className="login-button"
               disabled={loading}
             >
-              {loading ? '⏳ Logging in...' : '✅ Login'}
+              {loading ? '⏳ Logging in...' : 'Login'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleOtpSubmit} className="login-form">
             {error && (
               <div className="error-message">
-                ❌ {error}
+                {error}
               </div>
             )}
 
             <div className="mfa-info">
               <p>📧 Check your email for the OTP code</p>
-              <p style={{fontSize: '12px', color: '#666'}}>Code expires in 5 minutes</p>
+              <p style={{fontSize: '13px', color: '#1e40af', marginTop: '8px'}}>Code expires in 5 minutes</p>
             </div>
 
             <div className="form-group">
@@ -253,7 +256,7 @@ const Login = ({ onLoginSuccess, onSwitchToRegister, onSwitchToForgotPassword })
               className="login-button"
               disabled={loading || otp.length !== 6}
             >
-              {loading ? '⏳ Verifying...' : '✅ Verify & Login'}
+              {loading ? '⏳ Verifying...' : 'Verify & Login'}
             </button>
 
             <div className="otp-actions">

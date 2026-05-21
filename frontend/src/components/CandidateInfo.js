@@ -328,9 +328,6 @@ const CandidateInfo = ({ user, onLogout }) => {
       <header className="candidate-header">
         <div className="header-left">
           <span className="role-badge">Role: CANDIDATE</span>
-          {candidateName && (
-            <span className="candidate-name-badge">👤 {candidateName}</span>
-          )}
         </div>
         <nav className="header-nav">
           <button 
@@ -359,6 +356,9 @@ const CandidateInfo = ({ user, onLogout }) => {
           </button>
         </nav>
         <div className="header-right">
+          {candidateName && (
+            <span className="candidate-name-badge">👤 {candidateName}</span>
+          )}
           <button className="logout-btn" onClick={handleLogout}>
             Logout
           </button>

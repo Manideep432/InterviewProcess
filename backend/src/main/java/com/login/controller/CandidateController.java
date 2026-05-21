@@ -316,6 +316,148 @@ public class CandidateController {
             ));
         }
     }
+
+    /**
+     * Search candidates by name or email
+     */
+    @GetMapping("/search")
+    public ResponseEntity<?> searchCandidates(@RequestParam String searchTerm) {
+        try {
+            List<Candidate> candidates = candidateService.searchCandidates(searchTerm);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidates
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Search candidates by name or email for a specific HR
+     */
+    @GetMapping("/search/hr/{hrId}")
+    public ResponseEntity<?> searchCandidatesByHr(
+            @PathVariable Long hrId,
+            @RequestParam String searchTerm) {
+        try {
+            List<Candidate> candidates = candidateService.searchCandidatesByHr(searchTerm, hrId);
+            // Convert to DTOs
+            List<CandidateDTO> candidateDTOs = candidates.stream()
+                .map(CandidateDTO::new)
+                .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidateDTOs
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Advanced search with multiple filters
+     */
+    @GetMapping("/advanced-search")
+    public ResponseEntity<?> advancedSearch(
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String location) {
+        try {
+            List<Candidate> candidates = candidateService.advancedSearch(searchTerm, status, position, location);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidates
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Advanced search with multiple filters for a specific HR
+     */
+    @GetMapping("/advanced-search/hr/{hrId}")
+    public ResponseEntity<?> advancedSearchByHr(
+            @PathVariable Long hrId,
+            @RequestParam(required = false) String searchTerm,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String location) {
+        try {
+            List<Candidate> candidates = candidateService.advancedSearchByHr(hrId, searchTerm, status, position, location);
+            // Convert to DTOs
+            List<CandidateDTO> candidateDTOs = candidates.stream()
+                .map(CandidateDTO::new)
+                .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidateDTOs
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get candidates by status
+     */
+    @GetMapping("/status/{status}")
+    public ResponseEntity<?> getCandidatesByStatus(@PathVariable String status) {
+        try {
+            List<Candidate> candidates = candidateService.getCandidatesByStatus(status);
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidates
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Get candidates by status for a specific HR
+     */
+    @GetMapping("/status/{status}/hr/{hrId}")
+    public ResponseEntity<?> getCandidatesByStatusAndHr(
+            @PathVariable String status,
+            @PathVariable Long hrId) {
+        try {
+            List<Candidate> candidates = candidateService.getCandidatesByStatusAndHr(status, hrId);
+            // Convert to DTOs
+            List<CandidateDTO> candidateDTOs = candidates.stream()
+                .map(CandidateDTO::new)
+                .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(Map.of(
+                "success", true,
+                "candidates", candidateDTOs
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                "success", false,
+                "message", e.getMessage()
+            ));
+        }
+    }
 }
 
 // Made with Bob

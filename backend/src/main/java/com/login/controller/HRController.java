@@ -447,6 +447,43 @@ public class HRController {
             ));
         }
     }
+
+    /**
+     * Get enhanced dashboard statistics with previous period comparison
+     * Provides trend analysis and percentage data for better visualization
+     */
+    @GetMapping("/{hrId}/enhanced-stats")
+    public ResponseEntity<?> getEnhancedDashboardStats(@PathVariable Long hrId) {
+        try {
+            System.out.println("=== Fetching Enhanced Dashboard Stats ===");
+            System.out.println("HR ID: " + hrId);
+            
+            Map<String, Object> stats = hrService.getEnhancedDashboardStats(hrId);
+            
+            System.out.println("Enhanced stats retrieved successfully");
+            System.out.println("=========================================");
+            
+            return ResponseEntity.ok()
+                .header("Access-Control-Allow-Origin", "http://localhost:3000")
+                .header("Access-Control-Allow-Credentials", "true")
+                .body(Map.of(
+                    "success", true,
+                    "stats", stats,
+                    "timestamp", System.currentTimeMillis()
+                ));
+        } catch (Exception e) {
+            System.err.println("Error fetching enhanced stats: " + e.getMessage());
+            e.printStackTrace();
+            
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .header("Access-Control-Allow-Origin", "http://localhost:3000")
+                .header("Access-Control-Allow-Credentials", "true")
+                .body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+                ));
+        }
+    }
 }
 
 // Made with Bob
