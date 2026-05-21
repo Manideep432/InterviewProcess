@@ -383,6 +383,81 @@ public class CandidateService {
         
         return uniqueFileName;
     }
+
+    /**
+     * Search candidates by name or email
+     */
+    public List<Candidate> searchCandidates(String searchTerm) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return candidateRepository.findAll();
+        }
+        return candidateRepository.searchByNameOrEmail(searchTerm.trim());
+    }
+
+    /**
+     * Search candidates by name or email for a specific HR
+     */
+    public List<Candidate> searchCandidatesByHr(String searchTerm, Long hrId) {
+        Optional<User> hr = userRepository.findById(hrId);
+        if (hr.isEmpty()) {
+            throw new RuntimeException("HR not found");
+        }
+        
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            return candidateRepository.findByHr(hr.get());
+        }
+        
+        return candidateRepository.searchByNameOrEmailAndHr(searchTerm.trim(), hr.get());
+    }
+
+    /**
+     * Advanced search with multiple filters
+     */
+    public List<Candidate> advancedSearch(String searchTerm, String status, String position, String location) {
+        // Convert empty strings to null for the query
+        String search = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
+        String statusFilter = (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) ? status : null;
+        String positionFilter = (position != null && !position.trim().isEmpty()) ? position.trim() : null;
+        String locationFilter = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
+        
+        return candidateRepository.advancedSearch(search, statusFilter, positionFilter, locationFilter);
+    }
+
+    /**
+     * Advanced search with multiple filters for a specific HR
+     */
+    public List<Candidate> advancedSearchByHr(Long hrId, String searchTerm, String status, String position, String location) {
+        Optional<User> hr = userRepository.findById(hrId);
+        if (hr.isEmpty()) {
+            throw new RuntimeException("HR not found");
+        }
+        
+        // Convert empty strings to null for the query
+        String search = (searchTerm != null && !searchTerm.trim().isEmpty()) ? searchTerm.trim() : null;
+        String statusFilter = (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) ? status : null;
+        String positionFilter = (position != null && !position.trim().isEmpty()) ? position.trim() : null;
+        String locationFilter = (location != null && !location.trim().isEmpty()) ? location.trim() : null;
+        
+        return candidateRepository.advancedSearchByHr(hr.get(), search, statusFilter, positionFilter, locationFilter);
+    }
+
+    /**
+     * Get candidates by status
+     */
+    public List<Candidate> getCandidatesByStatus(String status) {
+        return candidateRepository.findByStatus(status);
+    }
+
+    /**
+     * Get candidates by status for a specific HR
+     */
+    public List<Candidate> getCandidatesByStatusAndHr(String status, Long hrId) {
+        Optional<User> hr = userRepository.findById(hrId);
+        if (hr.isEmpty()) {
+            throw new RuntimeException("HR not found");
+        }
+        return candidateRepository.findByHrAndStatus(hr.get(), status);
+    }
 }
 
 // Made with Bob

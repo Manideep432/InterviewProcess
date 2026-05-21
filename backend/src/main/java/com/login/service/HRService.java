@@ -897,7 +897,173 @@ public class HRService {
         dto.setActive(profile.isActive());
         dto.setCreatedAt(profile.getCreatedAt());
         dto.setUpdatedAt(profile.getUpdatedAt());
+
         return dto;
+    }
+
+    /**
+     * Get enhanced dashboard statistics with previous period comparison
+     * Provides trend analysis for better data visualization
+     */
+    public Map<String, Object> getEnhancedDashboardStats(Long hrId) {
+        Optional<User> hrOpt = userRepository.findById(hrId);
+        if (hrOpt.isEmpty() || !"HR".equals(hrOpt.get().getRole())) {
+            throw new RuntimeException("Invalid HR ID");
+        }
+
+        User hr = hrOpt.get();
+        Map<String, Object> stats = new HashMap<>();
+
+        // Get current period data (this month)
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startOfCurrentMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
+        LocalDateTime startOfPreviousMonth = startOfCurrentMonth.minusMonths(1);
+        LocalDateTime endOfPreviousMonth = startOfCurrentMonth.minusSeconds(1);
+
+        // Get candidates managed by this HR
+        List<Candidate> allCandidates = candidateRepository.findByHr(hr);
+        List<Candidate> currentMonthCandidates = allCandidates.stream()
+            .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().isAfter(startOfCurrentMonth))
+            .collect(Collectors.toList());
+        List<Candidate> previousMonthCandidates = allCandidates.stream()
+            .filter(c -> c.getCreatedAt() != null && 
+                   c.getCreatedAt().isAfter(startOfPreviousMonth) && 
+                   c.getCreatedAt().isBefore(endOfPreviousMonth))
+            .collect(Collectors.toList());
+
+        // Get panelists assigned by this HR
+        List<Panelist> allPanelists = panelistRepository.findByAssignedHr(hr);
+        List<Panelist> currentMonthPanelists = allPanelists.stream()
+            .filter(p -> p.getCreatedAt() != null && p.getCreatedAt().isAfter(startOfCurrentMonth))
+            .collect(Collectors.toList());
+        List<Panelist> previousMonthPanelists = allPanelists.stream()
+            .filter(p -> p.getCreatedAt() != null && 
+                   p.getCreatedAt().isAfter(startOfPreviousMonth) && 
+                   p.getCreatedAt().isBefore(endOfPreviousMonth))
+            .collect(Collectors.toList());
+
+        // Get interviews
+        List<Interview> allInterviews = interviewRepository.findByHrId(hrId);
+        List<Interview> currentMonthInterviews = allInterviews.stream()
+            .filter(i -> i.getCreatedAt() != null && i.getCreatedAt().isAfter(startOfCurrentMonth))
+            .collect(Collectors.toList());
+        List<Interview> previousMonthInterviews = allInterviews.stream()
+            .filter(i -> i.getCreatedAt() != null && 
+                   i.getCreatedAt().isAfter(startOfPreviousMonth) && 
+                   i.getCreatedAt().isBefore(endOfPreviousMonth))
+            .collect(Collectors.toList());
+
+        // Calculate candidate status distribution with percentages
+        Map<String, Map<String, Object>> candidateStatusStats = new HashMap<>();
+        long totalCandidates = allCandidates.size();
+        
+        String[] statuses = {"APPLIED", "SCREENING", "INTERVIEW", "INTERVIEW_COMPLETED", "SELECTED", "REJECTED"};
+        for (String status : statuses) {
+            long currentCount = allCandidates.stream()
+                .filter(c -> status.equals(c.getStatus()))
+                .count();
+            long previousCount = allCandidates.stream()
+                .filter(c -> status.equals(c.getStatus()) && 
+                       c.getUpdatedAt() != null &&
+                       c.getUpdatedAt().isBefore(startOfCurrentMonth))
+                .count();
+            
+            Map<String, Object> statusData = new HashMap<>();
+            statusData.put("count", currentCount);
+            statusData.put("percentage", totalCandidates > 0 ? 
+                Math.round((currentCount * 100.0) / totalCandidates) : 0);
+            statusData.put("previousCount", previousCount);
+            statusData.put("trend", currentCount > previousCount ? "UP" : 
+                          currentCount < previousCount ? "DOWN" : "STABLE");
+            statusData.put("change", currentCount - previousCount);
+            
+            candidateStatusStats.put(status, statusData);
+        }
+
+        // Calculate panelist experience distribution with percentages
+        Map<String, Map<String, Object>> panelistExperienceStats = new HashMap<>();
+        long totalPanelists = allPanelists.size();
+        
+        Map<String, int[]> experienceRanges = new HashMap<>();
+        experienceRanges.put("0-2", new int[]{0, 2});
+        experienceRanges.put("3-5", new int[]{3, 5});
+        experienceRanges.put("6-9", new int[]{6, 9});
+        experienceRanges.put("10+", new int[]{10, Integer.MAX_VALUE});
+        
+        for (Map.Entry<String, int[]> range : experienceRanges.entrySet()) {
+            int min = range.getValue()[0];
+            int max = range.getValue()[1];
+            
+            long currentCount = allPanelists.stream()
+                .filter(p -> {
+                    int exp = p.getExperienceYears() != null ? p.getExperienceYears() : 0;
+                    return exp >= min && exp <= max;
+                })
+                .count();
+            
+            long previousCount = allPanelists.stream()
+                .filter(p -> {
+                    int exp = p.getExperienceYears() != null ? p.getExperienceYears() : 0;
+                    return exp >= min && exp <= max && 
+                           p.getCreatedAt() != null &&
+                           p.getCreatedAt().isBefore(startOfCurrentMonth);
+                })
+                .count();
+            
+            Map<String, Object> expData = new HashMap<>();
+            expData.put("count", currentCount);
+            expData.put("percentage", totalPanelists > 0 ? 
+                Math.round((currentCount * 100.0) / totalPanelists) : 0);
+            expData.put("previousCount", previousCount);
+            expData.put("trend", currentCount > previousCount ? "UP" : 
+                       currentCount < previousCount ? "DOWN" : "STABLE");
+            expData.put("change", currentCount - previousCount);
+            
+            panelistExperienceStats.put(range.getKey(), expData);
+        }
+
+        // Overall statistics with trends
+        Map<String, Object> overallStats = new HashMap<>();
+        
+        // Total candidates trend
+        Map<String, Object> candidatesTrend = new HashMap<>();
+        candidatesTrend.put("current", allCandidates.size());
+        candidatesTrend.put("currentMonth", currentMonthCandidates.size());
+        candidatesTrend.put("previousMonth", previousMonthCandidates.size());
+        candidatesTrend.put("trend", currentMonthCandidates.size() > previousMonthCandidates.size() ? "UP" : 
+                           currentMonthCandidates.size() < previousMonthCandidates.size() ? "DOWN" : "STABLE");
+        candidatesTrend.put("change", currentMonthCandidates.size() - previousMonthCandidates.size());
+        overallStats.put("candidates", candidatesTrend);
+        
+        // Total panelists trend
+        Map<String, Object> panelistsTrend = new HashMap<>();
+        panelistsTrend.put("current", allPanelists.size());
+        panelistsTrend.put("currentMonth", currentMonthPanelists.size());
+        panelistsTrend.put("previousMonth", previousMonthPanelists.size());
+        panelistsTrend.put("trend", currentMonthPanelists.size() > previousMonthPanelists.size() ? "UP" : 
+                          currentMonthPanelists.size() < previousMonthPanelists.size() ? "DOWN" : "STABLE");
+        panelistsTrend.put("change", currentMonthPanelists.size() - previousMonthPanelists.size());
+        overallStats.put("panelists", panelistsTrend);
+        
+        // Total interviews trend
+        Map<String, Object> interviewsTrend = new HashMap<>();
+        interviewsTrend.put("current", allInterviews.size());
+        interviewsTrend.put("currentMonth", currentMonthInterviews.size());
+        interviewsTrend.put("previousMonth", previousMonthInterviews.size());
+        interviewsTrend.put("trend", currentMonthInterviews.size() > previousMonthInterviews.size() ? "UP" : 
+                           currentMonthInterviews.size() < previousMonthInterviews.size() ? "DOWN" : "STABLE");
+        interviewsTrend.put("change", currentMonthInterviews.size() - previousMonthInterviews.size());
+        overallStats.put("interviews", interviewsTrend);
+
+        // Compile final response
+        stats.put("candidateStatusStats", candidateStatusStats);
+        stats.put("panelistExperienceStats", panelistExperienceStats);
+        stats.put("overallStats", overallStats);
+        stats.put("period", "monthly");
+        stats.put("currentPeriod", startOfCurrentMonth.toString());
+        stats.put("previousPeriod", startOfPreviousMonth.toString());
+
+        return stats;
     }
 
     /**
